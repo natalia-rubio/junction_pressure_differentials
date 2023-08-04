@@ -45,11 +45,12 @@ def graphs_to_junction_dict_steady(graph_list, scaling_dict):
     for graph in graph_list: # loop over all data points
         base_junction = get_features_from_graph_steady(graph, scaling_dict)
         num_time_steps = 100
+        num_flows = graph.nodes["outlet"].data["outlet_flows"].numpy().shape[1]
         min_flow1 = graph.nodes["outlet"].data["outlet_flows"].numpy()[0][0]
-        max_flow1 = graph.nodes["outlet"].data["outlet_flows"].numpy()[0][3]
+        max_flow1 = graph.nodes["outlet"].data["outlet_flows"].numpy()[0][num_flows-1]
         flow1_cont = np.linspace(min_flow1, max_flow1, num_time_steps)
         min_flow2 = graph.nodes["outlet"].data["outlet_flows"].numpy()[1][0]
-        max_flow2 = graph.nodes["outlet"].data["outlet_flows"].numpy()[1][3]
+        max_flow2 = graph.nodes["outlet"].data["outlet_flows"].numpy()[1][num_flows-1]
         flow2_cont = np.linspace(min_flow2, max_flow2, num_time_steps)
 
         for time_ind in range(num_time_steps):

@@ -1,8 +1,8 @@
 import sys
-import os
+sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 import dgl
 print(dgl.__version__)
-from util.regression.neural_network.graphnet_nn import GraphNet
+#from util.regression.neural_network.graphnet_nn import GraphNet
 from dgl.data.utils import load_graphs
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -45,8 +45,8 @@ def inv_scale_tf(scaling_dict, field, field_name):
     scaled_field = tf.add(tf.multiply(field, std), mean)
     return scaled_field
 
-def generate_gnn_model(network_params):
-    return GraphNet(network_params)
+# def generate_gnn_model(network_params):
+#     return GraphNet(network_params)
 
 def get_learning_rate(train_params):
     scheduler_name = 'exponential'

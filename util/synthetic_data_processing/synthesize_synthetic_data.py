@@ -5,7 +5,7 @@ from util.tools.basic import *
 def get_coefs_steady(anatomy, rm_low_r2 = True):
 
     num_outlets = 2
-    char_val_dict = load_dict(f"/home/nrubio/Desktop/aorta_synthetic_data_dict_steady_{anatomy}")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
     char_val_dict.update({"coef_a": [],
                     "coef_b": []})
     to_rm = []
@@ -22,7 +22,10 @@ def get_coefs_steady(anatomy, rm_low_r2 = True):
         if (np.linalg.norm(residuals)/(1333**2))> 0.01:
             print(f"geo: {geo} {(np.linalg.norm(residuals)/(1333**2))}")
 
-        r2 = get_r2(X, dP, coefs.reshape(-1,1))
+        try:
+            r2 = get_r2(X, dP, coefs.reshape(-1,1))
+        except:
+            import pdb; pdb.set_trace()
         a = coefs[0][0]; b = coefs[1][0]
         if get_r2(X, dP, coefs.reshape(-1,1)) < 0.8: #0.95:
             to_rm.append(outlet_ind)
@@ -75,7 +78,7 @@ def get_geo_scalings_steady(anatomy):
     scaling_dict = {}
     to_normalize = ["outlet_radius","inlet_radius", "angle", "coef_a", "coef_b"]
     for value in to_normalize:
-        
+
         scaling_dict.update({value: [np.mean(char_val_dict[value]), np.std(char_val_dict[value])]})
 
         plt.clf()

@@ -15,16 +15,20 @@ def construct_model(model_name, segmentations, geo_params):
 
     contour_list = segmentations
     capped_vessels = create_vessels(contour_list=contour_list)
+    #unioned_model = capped_vessels[0]#
     unioned_model = union_all(capped_vessels)
     #unioned_model.write("junction_model_union", "vtp")
     model = clean(unioned_model)
     #model.write("junction_model_cleaned", "vtp")
     model = norm(model)
     #model.write("junction_model_normed", "vtp")
-    tmp = model.get_polydata()
-
+    #tmp = model.get_polydata()
+    smooth_model = model.get_polydata()
+    #smoothing_params = {'method':'constrained', 'num_iterations':500}
+    #smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, radius = 2, center = [0, 1, 0], smoothing_parameters = smoothing_params)
     # [=== Combine faces ===]
-    model.set_surface(tmp)
+    #
+    model.set_surface(smooth_model)
     print("Surface set.")
     model.compute_boundary_faces(85)
     model, walls, caps, ids = combine_walls(model)
@@ -33,8 +37,8 @@ def construct_model(model_name, segmentations, geo_params):
 
     return model
 
-def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 9):
-    edge_size = geo_params["outlet2_radius"]/mesh_divs#geo_params["outlet2_radius"]/500
+def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3):
+    edge_size = geo_params["outlet2_radius"]/mesh_divs #geo_params["outlet2_radius"]/500
     caps = model.identify_caps()
     ids = model.get_face_ids()
     walls = [ids[i] for i,x in enumerate(caps) if not x]
@@ -48,14 +52,15 @@ def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 9):
 
     mesher = sv.meshing.create_mesher(sv.meshing.Kernel.TETGEN)
     mesher.set_model(model)
-    mesher.set_boundary_layer(number_of_layers = 4, edge_size_fraction = 0.5, layer_decreasing_ratio = 6,
-       constant_thickness = False)
+    mesher.set_boundary_layer_options(number_of_layers=2, edge_size_fraction=0.5, layer_decreasing_ratio=0.8, constant_thickness=False)
+    #mesher.set_boundary_layer(number_of_layers = 4, edge_size_fraction = 0.5, layer_decreasing_ratio = 6,
+    #   constant_thickness = False)
     options = sv.meshing.TetGenOptions(global_edge_size = edge_size, surface_mesh_flag=True, volume_mesh_flag=True)
 
     # options.sphere_refinement_on = True
     # options.sphere_refinement =list({'edge_size':float, 'radius':float, 'center':[float, float, float]})
 
-    options.boundary_layer_inside = True
+    #options.boundary_layer_inside = True
 
     options.optimization = 6
     options.quality_ratio = 1.4
@@ -86,7 +91,7 @@ def generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, f
     if not os.path.exists(dir + '/centerlines'):
         os.mkdir(dir +  '/centerlines')
 
-    max_area_cap = get_max_area_cap(mesher, walls)
+    max_area_cap = get_inlet_cap(mesher, walls)
     print("Max Area Cap: ")
     print(max_area_cap)
     out_caps = faces[1:]

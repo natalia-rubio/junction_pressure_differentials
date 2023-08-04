@@ -28,7 +28,8 @@ def apply_unified0D_plus(junction_dict):
 
     try:
         C, K = junction_loss_coeff(U, A, theta) # run JLC function
-        dP_mynard = K * rho * U[0]**2
+        print(K)
+        dP_mynard = 0.5*rho*(U[0]**2 - U[1:]**2) - 0.5* K * rho * U[0]**2
     except:
         print(f"Error in applying Unified0D+ model. U: {U}, A: {A}, theta: {theta}")
         pdb.set_trace()

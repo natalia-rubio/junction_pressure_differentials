@@ -8,6 +8,7 @@ from sv import *
 import vtk
 import os
 import platform
+from vtk.util import numpy_support
 
 # LOAD IN CONTOUR GROUPS AND PATHLINES
 # HERE
@@ -364,6 +365,27 @@ def get_max_area_cap(mesher, walls):
         areas.append(mass.GetSurfaceArea())
         print("areas: "); print(areas)
     ind = np.argmax(np.asarray(areas)) + 1
+    max_area_cap = faces[ind]
+    print("faces" + str(faces))
+    print("max_area_cap" + str(max_area_cap))
+    return max_area_cap
+
+def get_inlet_cap(mesher, walls):
+    print("finding max area cap")
+    y_locs = []
+    mass = vtk.vtkMassProperties()
+    mesh = modeling.PolyData()
+    faces = mesher.get_model_face_ids()
+    print("got model face ids")
+    assert walls[0] == faces[0], "first face is wall"
+    for face in faces:
+        if face == walls[0]:
+            continue
+        pts = numpy_support.vtk_to_numpy(mesher.get_face_polydata(face).GetPoints().GetData())
+        y_loc = np.min(pts[:,1])
+        y_locs.append(y_loc)
+        print("y_locs: "); print(y_locs)
+    ind = np.argmin(np.asarray(y_locs)) + 1
     max_area_cap = faces[ind]
     print("faces" + str(faces))
     print("max_area_cap" + str(max_area_cap))

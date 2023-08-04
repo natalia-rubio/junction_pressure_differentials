@@ -21,8 +21,7 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None):
     input_tensors = dataloader[0]
     output_tensors = dataloader[1]
     flow_tensors = dataloader[2]
-    flow_der_tensors = dataloader[3]
-    dP_tensors = dataloader[4]
+    dP_tensors = dataloader[3]
 
     for batch_ind in range(len(dataloader[0])):
         #import pdb; pdb.set_trace()
@@ -33,10 +32,8 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None):
 
         dP_loss_value = tf.math.sqrt(gnn_model.get_dP_loss(input_tensors[batch_ind],
                             flow_tensors[batch_ind],
-                            flow_der_tensors[batch_ind],
                             dP_tensors[batch_ind],
-                            loss,
-                            scaling_dict))
+                            loss))
 
         dP_loss = dP_loss + dP_loss_value.numpy()
 
@@ -44,9 +41,7 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None):
             loss_value_gnn = gnn_model.update_nn_weights(input_tensors[batch_ind],
                                                      output_tensors[batch_ind],
                                                      flow_tensors[batch_ind],
-                                                     flow_der_tensors[batch_ind],
                                                      dP_tensors[batch_ind],
-                                                     scaling_dict,
                                                      optimizer, loss, output_name)
 
         count = count + 1
@@ -62,11 +57,9 @@ def evaluate_model(gnn_model,
                     validation_master_tensors = None,
                     output_name = None,
                     train = True):
-    #print("Inside evaluate_model.")
 
     if validation_master_tensors != None:
-        validation_batched_tensors = get_batched_tensors(validation_master_tensors, validation_master_tensors[0].shape[0], 0)
-        #print("Looping over validation set.")
+        validation_batched_tensors = get_batched_tensors_steady(validation_master_tensors, validation_master_tensors[0].shape[0], 0)
         validation_results = loop_over(dataloader = validation_batched_tensors,
                                         gnn_model = gnn_model,
                                         output_name = output_name,
@@ -75,8 +68,7 @@ def evaluate_model(gnn_model,
     else:
         validation_results = None
 
-    train_batched_tensors = get_batched_tensors(train_master_tensors, batch_size, 0.01)
-    #print("Looping over training set.")
+    train_batched_tensors = get_batched_tensors_steady(train_master_tensors, batch_size, 0.01)
     train_results = loop_over(dataloader = train_batched_tensors,
                                     gnn_model = gnn_model,
                                     output_name = output_name,
@@ -93,22 +85,19 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
 
 
     train_dataloader = get_graph_data_loader(train_dataset, batch_size=len(train_dataset))
-    train_master_tensors = get_master_tensors(train_dataloader)
+    train_master_tensors = get_master_tensors_steady(train_dataloader)
     validation_dataloader = get_graph_data_loader(validation_dataset, batch_size=len(validation_dataset))
-    validation_master_tensors = get_master_tensors(validation_dataloader)
+    validation_master_tensors = get_master_tensors_steady(validation_dataloader)
 
     validation_input_tensor_data_loader = validation_master_tensors[0]
     validation_output_tensor_data_loader = validation_master_tensors[1]
     validation_flow_tensor_data_loader = validation_master_tensors[2]
-    validation_flow_der_tensor_data_loader = validation_master_tensors[3]
-    validation_dP_tensor_data_loader = validation_master_tensors[4]
+    validation_dP_tensor_data_loader = validation_master_tensors[3]
 
     nepochs = train_params['nepochs']
     learning_rate = get_learning_rate(train_params)
     optimizer = get_optimizer(train_params, learning_rate)
     mse_coef_train_list = []; mse_dP_train_list = []; mse_coef_val_list = []; mse_dP_val_list = []
-    #val_batch = dgl.batch([graph.to("/gpu:0") for graph in validation_dataset])
-    #train_batch = dgl.batch([graph.to("/gpu:0") for graph in train_dataset])
     for epoch in range(nepochs):
         train_results, val_results = evaluate_model(gnn_model = gnn_model,
                                                     train_master_tensors = train_master_tensors,
@@ -117,9 +106,6 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
                                                     optimizer = optimizer,
                                                     output_name = network_params["output_name"],
                                                     validation_master_tensors = validation_master_tensors)
-
-        # print(f"True coefs: {train_batch[0].nodes['outlet'].data['outlet_coefs'][0,:]}")
-        # print(f"Pred coefs: {gnn_model.forward(train_batch[0])[0,:]}")
         mse_coef_train_list.append(train_results['coef_loss']/train_results['count'])
         mse_coef_val_list.append(val_results['coef_loss']/val_results['count'])
         mse_dP_train_list.append(train_results['dP_loss']/train_results['count'])
@@ -140,9 +126,8 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
         validation_dP_tensor_data_loader/1333).numpy())
     quad_loss = tf.math.sqrt(gnn_model.get_quad_loss(validation_output_tensor_data_loader,
         validation_flow_tensor_data_loader,
-        validation_flow_der_tensor_data_loader,
         validation_dP_tensor_data_loader,
-        mse, scaling_dict))
+        mse))
     if model_name == None:
         model_name = str(network_params["hl_mlp"])[0:4] + "_hl_" + str(network_params["latent_size_mlp"])[0:4] + "_lsmlp_" + (str(train_params["learning_rate"])[0:6]).replace(".", "_") + "_lr_"+ "_bs_" + str(train_params["batch_size"]) + "_nepochs_" + str(train_params["nepochs"]) + anatomy
 
@@ -156,12 +141,10 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
     plt.yscale("log")
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1, mode="expand", borderaxespad=0.)
 
-    plt.savefig("data/training_plots/" + model_name + "mse_over_epochs.png", dpi=1200, bbox_inches='tight', transparent=True)
+    plt.savefig("results/training_plots/" + model_name + "mse_over_epochs.png", dpi=1200, bbox_inches='tight', transparent=True)
 
     loss_history = {"train": mse_dP_train_list,
                     "val": mse_dP_val_list}
-
-    save_dict(loss_history, "data/training_histories/train_history_dict")
 
     train_mse = train_results['coef_loss']/train_results['count']
     val_mse = val_results['coef_loss']/val_results['count']
