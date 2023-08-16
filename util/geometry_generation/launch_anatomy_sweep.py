@@ -2,7 +2,7 @@ import sys
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 #from util.tools.basic import *
 from util.geometry_generation.helper_functions import *
-from util.geometry_generation.segmentation import *
+from util.geometry_generation.segmentation_mynard import *
 from util.geometry_generation.modeling_and_meshing import *
 import pickle
 def load_dict(filename_):
@@ -38,28 +38,28 @@ def launch_anatomy_geo_sweep(anatomy, num_geos = 5):
         os.mkdir("data/synthetic_junctions/"+anatomy)
     dir = "data/synthetic_junctions/"+anatomy
     geos = os.listdir(dir)
-    for i in range(len(geos)):
+    for i in range(num_geos):
 
         geo_name = geos[i]
         if os.path.exists(dir+"/"+geo_name+"/mesh-complete") == False:
 
-            #try:
-            print("Generating Geometry %d"%i)
-            print(dir+"/"+geo_name+"/junction_params_dict")
-            geo_params = load_dict(dir+"/"+geo_name+"/junction_params_dict")
+            try:
+                print("Generating Geometry " + geo_name)
+                print(dir+"/"+geo_name+"/junction_params_dict")
+                geo_params = load_dict(dir+"/"+geo_name+"/junction_params_dict")
 
-            print(geo_params)
-            generate_junction_mesh(geo_name, geo_params, anatomy, 4)
-            #
-            # except:
-            #     print("Failed mesh generation.")
-            #     try:
-            #         if os.path.exists(dir+"/"+geo_name+"/junction_params_dict"):
-            #             os.remove(dir+"/"+geo_name+"/junction_params_dict")
-            #         if os.path.exists(dir+"/"+geo_name):
-            #             os.rmdir(dir+"/"+geo_name)
-            #     except:
-            #         continue
+                print(geo_params)
+                generate_junction_mesh(geo_name, geo_params, anatomy, mesh_divs = 4)
+
+            except:
+                print("Failed mesh generation.")
+                try:
+                    if os.path.exists(dir+"/"+geo_name+"/junction_params_dict"):
+                        os.remove(dir+"/"+geo_name+"/junction_params_dict")
+                    if os.path.exists(dir+"/"+geo_name):
+                        os.rmdir(dir+"/"+geo_name)
+                except:
+                    continue
 
     return
 
@@ -112,7 +112,7 @@ def write_pipe():
     return
 
 if __name__ == "__main__":
-    launch_anatomy_geo_sweep(anatomy = "mynard_test", num_geos = 1)
+    launch_anatomy_geo_sweep(anatomy = "mynard_rand", num_geos = 200)
     #write_pipe()
     #launch_mesh_sweep(anatomy = "mynard_vary_mesh_smooth", num_geos = 1)
 

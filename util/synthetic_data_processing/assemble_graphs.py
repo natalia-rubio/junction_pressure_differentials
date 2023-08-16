@@ -12,10 +12,10 @@ def assemble_graphs_steady(anatomy):
 
     for i in range(int(len(char_val_dict["inlet_radius"])/2)):
 
-        inlet_data = np.stack((scale(scaling_dict, np.asarray(char_val_dict["inlet_radius"][2*i]), "inlet_radius").reshape(1,-1),
+        inlet_data = np.stack((scale(scaling_dict, np.asarray(char_val_dict["inlet_area"][2*i]), "inlet_area").reshape(1,-1),
                                 )).T
 
-        outlet_data = np.stack((scale(scaling_dict, np.asarray(char_val_dict["outlet_radius"][2*i: 2*(i+1)]), "outlet_radius"),
+        outlet_data = np.stack((scale(scaling_dict, np.asarray(char_val_dict["outlet_area"][2*i: 2*(i+1)]), "outlet_area"),
                                 scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i: 2*(i+1)]), "angle")
                                 )).T
 

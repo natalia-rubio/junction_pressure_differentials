@@ -40,7 +40,7 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
     network_params = {
                    'latent_size_gnn':3,
-                   'latent_size_mlp': 30,
+                   'latent_size_mlp': 40,
                    'out_size': 2,
                    'process_iterations': 1,
                    'hl_mlp': 1,
@@ -78,5 +78,5 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
 if __name__ == "__main__":
 
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_u_40-60_over3", num_geos = 360,  seed = 0)
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "mynard_rand", num_geos = 64,  seed = 0)
     print(f"Train MSE: {train_mse}.  Val MSE {val_mse}.")

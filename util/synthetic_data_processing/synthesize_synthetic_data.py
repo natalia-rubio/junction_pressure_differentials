@@ -76,7 +76,7 @@ def get_geo_scalings_steady(anatomy):
 
     char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
     scaling_dict = {}
-    to_normalize = ["outlet_radius","inlet_radius", "angle", "coef_a", "coef_b"]
+    to_normalize = ["outlet_radius","inlet_radius","outlet_area","inlet_area", "angle", "coef_a", "coef_b"]
     for value in to_normalize:
 
         scaling_dict.update({value: [np.mean(char_val_dict[value]), np.std(char_val_dict[value])]})

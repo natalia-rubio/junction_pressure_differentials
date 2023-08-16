@@ -76,6 +76,25 @@ def write_mynard_junction():
                 save_dict(params_rand, f"data/synthetic_junctions/{anatomy}/{junction_name}/junction_params_dict")
     return
 
+
+def write_mynard_junctions_rand(num_junctions = 1):
+
+    anatomy = "mynard_rand"
+    if not os.path.exists("data/synthetic_junctions"):
+        os.mkdir("data/synthetic_junctions")
+    if not os.path.exists("data/synthetic_junctions/"+anatomy):
+        os.mkdir("data/synthetic_junctions/"+anatomy)
+
+    for i in range(num_junctions):
+
+        junction_name = f"mynard_{i}"
+        if os.path.exists(f"data/synthetic_junctions/{anatomy}/{junction_name}") == False:
+                print(f"Generating {junction_name}")
+                os.mkdir(f"data/synthetic_junctions/{anatomy}/{junction_name}")
+                params_rand = write_junction_params_mynard_rand()
+                save_dict(params_rand, f"data/synthetic_junctions/{anatomy}/{junction_name}/junction_params_dict")
+    return
+
 def get_random(stats_list):
     return stats_list[0] + (0.4 + 0.2 * np.random.default_rng(seed=None).random()) * (stats_list[1]-stats_list[0])
 
@@ -144,7 +163,7 @@ def write_junction_params_sweep_outlet_radius(params_stat_dict, percentile):
 
 def write_mynard_junction_params_sweep_outlet_radius():
 
-    num_junctions = 1; anatomy = "mynard_test"
+    num_junctions = 3; anatomy = "mynard_vary_rout"
 
     if not os.path.exists("data/synthetic_junctions"):
         os.mkdir("data/synthetic_junctions")
@@ -158,7 +177,7 @@ def write_mynard_junction_params_sweep_outlet_radius():
                 print(f"Generating {junction_name}")
                 os.mkdir(f"data/synthetic_junctions/{anatomy}/{junction_name}")
                 params_rand = write_junction_params_mynard()
-                params_rand["outlet2_radius"] = params_rand["outlet2_radius"] * (0.9 + i*0.05)
+                params_rand["outlet2_radius"] = params_rand["outlet2_radius"] * (0.9 + i*0.1)
 
 
                 if params_rand["outlet1_radius"] < params_rand["outlet2_radius"]:
@@ -279,8 +298,37 @@ def write_junction_params_mynard():
 
     return params_rand
 
+def write_junction_params_mynard_rand():
+
+    inlet_radius = 0.55
+    outlet1_angle = 45
+    outlet2_angle = 45
+
+    outlet1_radius = 0.55
+    outlet2_radius = 0.55
+
+    re = 1800
+    viscosity = 0.04
+    density = 1.06
+    U_in = re * viscosity / (density * 2 * inlet_radius)
+
+
+    inlet_flow = (U_in/2) * (np.pi* inlet_radius**2)
+    params_rand = {"inlet_radius" : inlet_radius,
+                    "outlet1_radius": outlet1_radius,
+                    "outlet2_radius": outlet2_radius,
+                    "outlet1_angle": outlet1_angle,
+                    "outlet2_angle": outlet2_angle,
+                    "inlet_flow": inlet_flow}
+    for param in params_rand.keys():
+        params_rand[param] *= 0.8 + (0.4*np.random.default_rng(seed=None).random())
+
+    return params_rand
+
 if __name__ == '__main__':
     #write_junction_params_mynard()
     #write_pipe_params_sweep_mesh()
-    write_mynard_junction_params_sweep_outlet_radius()
-    #write_rout_sweep_junctions(anatomy = "Aorta_vary_rout", start = 0, num_junctions = 5)
+    #write_mynard_junction_params_sweep_outlet_radius()
+    #write_rout_sweep_junctions(anatomy = "Aorta_vary_rout", start = 0, num_junctions = 3)
+    #write_anatomy_junctions(anatomy = "Aorta_u_40-60", start = 0, num_junctions = 200)
+    write_mynard_junctions_rand(num_junctions = 200)

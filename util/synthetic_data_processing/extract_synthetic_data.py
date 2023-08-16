@@ -6,14 +6,16 @@ def collect_synthetic_results_steady(anatomy, require4 = True):
     print(anatomy)
 
     char_val_dict = {"outlet_radius": [],
-                    "inlet_outlet_area_rat": [],
+                    "inlet_area": [],
                     "inlet_radius": [],
-                    "outlet_area_rat": [],
+                    "outlet_area": [],
                     "angle": [],
                     "flow_list": [],
                     "dP_list": [],
-                    "name": [],
-                    "outlet_area_total": []}
+                    "dP_junc_list": [],
+                    "inlet_length": [],
+                    "outlet_length": [],
+                    "name": []}
 
     home_dir = os.path.expanduser("~")
     geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}"); geos.sort()
@@ -26,6 +28,7 @@ def collect_synthetic_results_steady(anatomy, require4 = True):
 
             flow_lists = [[0],[0]]
             dP_lists = [[0],[0]]
+            dP_junc_lists = [[0],[0]]
 
             for i in range(4):
                 try:
@@ -37,43 +40,37 @@ def collect_synthetic_results_steady(anatomy, require4 = True):
                         else:
                             continue
                     soln_dict = load_dict(flow_result_dir)
-                    print(geo); print(soln_dict)
-
-                    # Enforce that the first outlet always be the larger one!
-                    if soln_dict["area"][0,1] < soln_dict["area"][0,2]:
-                        print(f"Switching outlets on {geo}.")
-                        for value in soln_dict.keys():
-                            if value == "times":
-                                continue
-                            tmp = copy.deepcopy(soln_dict[value][:,1])
-                            soln_dict[value][:,1] = soln_dict[value][:,2]
-                            soln_dict[value][:,2] = tmp
-
-                    if np.abs(np.sum(soln_dict["flow_in_time"][1, 1:]) - soln_dict["flow_in_time"][1,0])/soln_dict["flow_in_time"][1,0] > 0.01:
-                        print(f"{geo} - mass not conserved.")
-                        raise ValueError
-                        continue
-
+                    #print(geo); print(soln_dict)
 
                     for outlet_ind in range(2):
-                        flow_lists[outlet_ind] += [soln_dict["flow_in_time"][1, outlet_ind + 1]]
-                        dP_lists[outlet_ind] += [soln_dict["pressure_in_time"][1, outlet_ind + 1] - soln_dict["pressure_in_time"][1, 0]]
-
+                        flow_lists[outlet_ind] += [soln_dict["flow"][outlet_ind]]
+                        dP_lists[outlet_ind] += [soln_dict["dp_end"][outlet_ind]]
+                        dP_junc_lists[outlet_ind] += [soln_dict["dp_junc"][outlet_ind]]
                 except:
-                    print("Problem extracting simulation data.")
                     if require4:
-                        raise(ValueError)
-                    else:
-                        continue
+                        raise ValueError
+
             if len(flow_lists[0]) == 1:
                 continue
+
             char_val_dict["flow_list"] += flow_lists
             char_val_dict["dP_list"] += dP_lists
-            char_val_dict["inlet_radius"] += [junction_params["inlet_radius"]**2, junction_params["inlet_radius"]**2]
+            char_val_dict["dP_junc_list"] += dP_junc_lists
+            #char_val_dict["inlet_radius"] += [junction_params["inlet_radius"]**2, junction_params["inlet_radius"]**2]
+            #char_val_dict["outlet_radius"] += [junction_params["outlet1_radius"]**2, junction_params["outlet2_radius"]**2]
 
-            char_val_dict["outlet_radius"] += [junction_params["outlet1_radius"]**2, junction_params["outlet2_radius"]**2]
+            char_val_dict["inlet_radius"] += [np.sqrt(soln_dict["area"][2]/np.pi), np.sqrt(soln_dict["area"][2]/np.pi)]
+            char_val_dict["outlet_radius"] += [np.sqrt(soln_dict["area"][0]/np.pi), np.sqrt(soln_dict["area"][1]/np.pi)]
+
+            char_val_dict["inlet_area"] += [soln_dict["area"][2],soln_dict["area"][2]]
+            char_val_dict["outlet_area"] += [soln_dict["area"][0], soln_dict["area"][1]]
+
+            char_val_dict["inlet_length"] += [soln_dict["length"][2], soln_dict["length"][2]]
+            char_val_dict["outlet_length"] += [soln_dict["length"][0], soln_dict["length"][1]]
+
             char_val_dict["angle"] += [junction_params["outlet1_angle"], junction_params["outlet2_angle"]]
             char_val_dict["name"] += [geo+"_1", geo+"_2"]
+
         except:
             print(f"Problem extracting junction data.  Skipping {geo}.")
             continue

@@ -6,11 +6,11 @@ from util.synthetic_data_processing.synthesize_synthetic_data import *
 from util.synthetic_data_processing.assemble_graphs import *
 from util.synthetic_data_processing.train_val_split import *
 
-anatomy = "mynard_vary_rout_low_vis" # "Aorta_u_40-60_over3"#
-collect_synthetic_results_steady(anatomy = anatomy, require4 = False)
+anatomy = sys.argv[1];
+collect_synthetic_results_steady(anatomy = anatomy, require4 = True)
 print("Extracted simulation results.")
 
-get_coefs_steady(anatomy = anatomy, rm_low_r2 = False)
+get_coefs_steady(anatomy = anatomy, rm_low_r2 = True)
 print("Fitted dP(Q) coefficients.")
 
 get_geo_scalings_steady(anatomy)

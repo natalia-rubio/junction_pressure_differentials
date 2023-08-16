@@ -168,7 +168,7 @@ def get_outlet_segmentations(geo_params):
 def get_u_segmentations(geo_params):
     """
     """
-    num_pts = 5#10
+    num_pts = 10
     inset = 1
     #char_len = geo_params["inlet_radius"]*12
     char_len = 0.5310796510320017*20
@@ -230,33 +230,12 @@ def get_u_segmentations(geo_params):
                                     normal = u_path.get_curve_tangent(u_path_curve_points.index(u_path_points_list[i])))
         segmentations.append(contour)
 
-    r_top = geo_params["inlet_radius"]*1.8
+    r_top = geo_params["inlet_radius"]*1.5
     r_side = geo_params["inlet_radius"]
     #r_side = geo_params["outlet2_radius"]*1.3
     r_bottom = geo_params["inlet_radius"]*1.8
     num_el_pts = 20
     contour_pts = []
-
-    # for i in range(num_el_pts):
-    #     p = r_top
-    #     theta = (np.pi/2) * i /num_el_pts
-    #     r = r_side + (r_top - r_side)*(1-np.cos((np.pi/2)* i/num_el_pts))
-    #     contour_pts.append([0, r*np.sin(theta), r*np.cos(theta)])
-    #
-    # for i in range(num_el_pts):
-    #     r = r_top - (r_top - r_side)*(1-np.cos((np.pi/2)* i/num_el_pts))
-    #     theta = (np.pi/2) + (np.pi/2) * i /num_el_pts
-    #     contour_pts.append([0, r*np.sin(theta), r*np.cos(theta)])
-    #
-    # for i in range(num_el_pts):
-    #     r = r_side + (r_bottom - r_side)*(1-np.cos((np.pi/2)* i/num_el_pts))
-    #     theta = (np.pi) + (np.pi/2) * i /num_el_pts
-    #     contour_pts.append([0, r*np.sin(theta), r*np.cos(theta)])
-    #
-    # for i in range(num_el_pts):
-    #     r = r_bottom - (r_bottom - r_side)*(1-np.cos((np.pi/2)* i/num_el_pts))
-    #     theta = (3*np.pi/2) + (np.pi/2) * i /num_el_pts
-    #     contour_pts.append([0, r*np.sin(theta), r*np.cos(theta)])
 
     for i in range(num_el_pts):
         z = r_side * (1-i /num_el_pts)
