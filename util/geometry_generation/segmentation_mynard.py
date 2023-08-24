@@ -230,10 +230,12 @@ def get_u_segmentations(geo_params):
                                     normal = u_path.get_curve_tangent(u_path_curve_points.index(u_path_points_list[i])))
         segmentations.append(contour)
 
-    r_top = geo_params["inlet_radius"]*1.5
-    r_side = geo_params["inlet_radius"]
+    r_base = max([geo_params["inlet_radius"], geo_params["outlet1_radius"], geo_params["outlet2_radius"]])
+    print(r_base)
+    r_top =  r_base*1.55
+    r_side = r_base
     #r_side = geo_params["outlet2_radius"]*1.3
-    r_bottom = geo_params["inlet_radius"]*1.8
+    r_bottom = r_base*1.5
     num_el_pts = 20
     contour_pts = []
 
@@ -249,12 +251,12 @@ def get_u_segmentations(geo_params):
 
     for i in range(num_el_pts):
         z = -r_side * (1- i /num_el_pts)
-        y = -r_top * np.sqrt(1 - (z/r_side)**2)
+        y = -r_bottom * np.sqrt(1 - (z/r_side)**2)
         contour_pts.append([0, y, z])
 
     for i in range(num_el_pts):
         z = r_side * (i /num_el_pts)
-        y = -r_top * np.sqrt(1 - (z/r_side)**2)
+        y = -r_bottom * np.sqrt(1 - (z/r_side)**2)
         contour_pts.append([0, y, z])
 
     contour = sv.segmentation.Contour(contour_pts)

@@ -78,5 +78,5 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
 if __name__ == "__main__":
 
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "mynard_rand", num_geos = 64,  seed = 0)
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "mynard_rand", num_geos = 89,  seed = 0)
     print(f"Train MSE: {train_mse}.  Val MSE {val_mse}.")

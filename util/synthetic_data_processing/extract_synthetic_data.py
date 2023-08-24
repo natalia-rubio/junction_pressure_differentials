@@ -50,7 +50,7 @@ def collect_synthetic_results_steady(anatomy, require4 = True):
                     if require4:
                         raise ValueError
 
-            if len(flow_lists[0]) == 1:
+            if len(flow_lists[0]) <= 2:
                 continue
 
             char_val_dict["flow_list"] += flow_lists

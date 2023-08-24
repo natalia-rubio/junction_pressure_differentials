@@ -10,7 +10,7 @@ sys.path.pop()
 def get_inlet_segmentations(geo_params):
     """
     """
-    num_pts = 9
+    num_pts =10
 
     char_len = geo_params["inlet_radius"]
     char_len = 0.5310796510320017*15
@@ -25,7 +25,7 @@ def get_inlet_segmentations(geo_params):
 
     segmentations = []
 
-    for i in range(num_pts-3):
+    for i in range(num_pts-1):
         contour = sv.segmentation.Circle(radius = geo_params["inlet_radius"],
                                     center = inlet_path_points_list[i],
                                     normal = inlet_path.get_curve_tangent(inlet_path_curve_points.index(inlet_path_points_list[i])))
@@ -36,12 +36,12 @@ def get_inlet_segmentations(geo_params):
     #                             normal = inlet_path.get_curve_tangent(inlet_path_curve_points.index(inlet_path_points_list[i])))
     #
     # segmentations.append(contour)
-    r_top = geo_params["inlet_radius"]
     r_side = geo_params["inlet_radius"]
+    r_top = (2*geo_params["inlet_radius"]+geo_params["outlet1_radius"])/3
     r_bottom = geo_params["inlet_radius"]
     num_el_pts = 20
     contour_pts = []
-    y = 0#inlet_path_points_list[-1][1]
+    y = 0.25#inlet_path_points_list[-1][1]
     for i in range(num_el_pts):
         x = r_side * (1-i /num_el_pts)
         z = r_top * np.sqrt(1 - (x/r_side)**2)
@@ -168,7 +168,7 @@ def get_outlet_segmentations(geo_params):
 def get_u_segmentations(geo_params):
     """
     """
-    num_pts = 5#10
+    num_pts = 8#10
     inset = 1
     #char_len = geo_params["inlet_radius"]*12
     char_len = 0.5310796510320017*20
@@ -177,8 +177,6 @@ def get_u_segmentations(geo_params):
 
     r = np.linspace(0, char_len, num_pts, endpoint = True)#[2:]
     theta = np.ones((num_pts,)) * geo_params["outlet1_angle"]
-    # theta[0] = geo_params["outlet1_angle"]/3
-    # theta[1] = geo_params["outlet1_angle"]*2/3
     theta = np.pi/2 + np.pi * theta / 180
     outlet1_x = r * np.cos(theta) #+  geo_params["inlet_radius"]/2
     outlet1_y = r * np.sin(theta)
@@ -189,16 +187,12 @@ def get_u_segmentations(geo_params):
 
     r = np.linspace(0, char_len, num_pts, endpoint = True)#[2:]
     theta = np.ones((num_pts,)) * geo_params["outlet2_angle"]
-    # theta[0] = geo_params["outlet2_angle"]/3
-    # theta[1] = geo_params["outlet2_angle"]*2/3
     theta = np.pi/2 - np.pi * theta / 180
     outlet2_x = r * np.cos(theta) #-  geo_params["inlet_radius"]/2
     outlet2_y = r * np.sin(theta)
     outlet2_y = outlet2_y #- geo_params["inlet_radius"]*1.5
     outlet2_path_points_list = [[float(outlet2_x[i]), float(outlet2_y[i]), 0.0] for i in range(1, num_pts)]
 
-    # outlet1_path_points_list.append([(float(outlet1_x[1]) + float(outlet2_x[1]))/2,
-    #                              (float(outlet1_y[1]) + float(outlet2_y[1]))/2 - 0.5*geo_params["inlet_radius"], 0.0])
     outlet1_path_points_list.append([0.0, 0.0, 0.0])
 
     u_path = sv.pathplanning.Path()
@@ -209,10 +203,6 @@ def get_u_segmentations(geo_params):
             u_path.add_control_point(point)
         else:
             u_path.add_control_point(point, 0)
-
-    #u_path.add_control_point([0.0, 0.0, 0.0])
-    # u_path.add_control_point([(float(outlet1_x[-1]) + float(outlet2_x[-1]))/2
-    #                             (float(outlet1_y[-1] + float(outlet2_y[-1]))/2, 0.0])
 
 
     for point in outlet2_path_points_list:
@@ -230,10 +220,10 @@ def get_u_segmentations(geo_params):
                                     normal = u_path.get_curve_tangent(u_path_curve_points.index(u_path_points_list[i])))
         segmentations.append(contour)
 
-    r_top = geo_params["inlet_radius"]*1.8
+    r_top = geo_params["inlet_radius"]*2.2
     r_side = geo_params["inlet_radius"]
     #r_side = geo_params["outlet2_radius"]*1.3
-    r_bottom = geo_params["inlet_radius"]*1.8
+    r_bottom = geo_params["inlet_radius"]*2
     num_el_pts = 20
     contour_pts = []
 

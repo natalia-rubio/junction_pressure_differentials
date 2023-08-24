@@ -17,15 +17,16 @@ def dP_poiseuille(flow, radius, length):
 
 def vary_param(anatomy, variable, dP_type):
     plt.clf()
-    model_name = "1_hl_30_lsmlp_0_02_lr_0_05_lrd_1e-05_wd_bs_15_nepochs_200_seed_0_geos_360"#"1_hl_40_lsmlp_0_02_lr_0_05_lrd_1e-05_wd_bs_15_nepochs_200_seed_2_geos_360"#"1_hl_30_lsmlp_0_02_lr_0_05_lrd_1e-05_wd_bs_15_nepochs_200_seed_2_geos_360"
+    model_name = "1_hl_40_lsmlp_0_02_lr_0_05_lrd_1e-05_wd_bs_4_nepochs_200_seed_0_geos_89"
     nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name, compile=True)
 
     #junction_params = load_dict(f"/home/nrubio/Desktop/synthetic_junctions/Aorta_vary_r2/{geo}/junction_params_dict")
     char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
     #char_val_dict0 = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout/synthetic_data_dict_steady")
-    print(char_val_dict)
-    #scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
-    scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_u_40-60_over3_scaling_dict_steady")
+    #print(char_val_dict)
+    scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
+    print(scaling_dict)
+    #scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_u_40-60_over3_scaling_dict_steady")
     dPs = []
 
     for i in range(int(len(char_val_dict["name"])/2)):
@@ -36,11 +37,11 @@ def vary_param(anatomy, variable, dP_type):
             outlet_ind = 0
         print(outlet_ind)
 
-        inlet_data = np.stack((scale(scaling_dict, char_val_dict["inlet_radius"][2*i], "inlet_radius").reshape(1,-1),
+        inlet_data = np.stack((scale(scaling_dict, char_val_dict["inlet_area"][2*i], "inlet_area").reshape(1,-1),
                                 )).T
 
         outlet_data = np.stack((
-            scale(scaling_dict, np.asarray(char_val_dict["outlet_radius"][2*i: 2*(i+1)]), "outlet_radius"),
+            scale(scaling_dict, np.asarray(char_val_dict["outlet_area"][2*i: 2*(i+1)]), "outlet_area"),
             scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i: 2*(i+1)]), "angle"),
             )).T
         #print(outlet_data)
@@ -78,17 +79,20 @@ def vary_param(anatomy, variable, dP_type):
         print(graph.nodes["outlet"].data)
 
         master_tensor = get_master_tensors_steady([graph])
+        input_tensor = master_tensor[0]
         flow_tensor = master_tensor[2]
         dP = master_tensor[3]
 
         flow_tensor_cont = tf.linspace(flow_tensor[outlet_ind,0], flow_tensor[outlet_ind,-1], 100)
         inflow_tensor_cont =  tf.linspace(flow_tensor[0,0], flow_tensor[0,-1], 100) \
                             + tf.linspace(flow_tensor[1,0], flow_tensor[1,-1], 100)
-        # pred_outlet_coefs = tf.cast(nn_model.predict(input_tensor), dtype=tf.float32)
-        # pred_dP = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,0], "coef_a"), (-1,1)) * tf.square(flow_tensor_cont) + \
-        #             tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,1], "coef_b"), (-1,1)) * flow_tensor_cont
-        #
-        # dPs.append(np.asarray(pred_dP))
+
+        pred_outlet_coefs = tf.cast(nn_model.predict(input_tensor), dtype=tf.float32)
+
+        pred_dP = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,0], "coef_a"), (-1,1)) * tf.square(flow_tensor_cont) + \
+                    tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,1], "coef_b"), (-1,1)) * flow_tensor_cont
+
+        dPs.append(np.asarray(pred_dP))
 
         junction_dict_global = graphs_to_junction_dict_steady([graph], scaling_dict)
         flow_arr = flow_tensor.numpy()
@@ -104,8 +108,8 @@ def vary_param(anatomy, variable, dP_type):
         dP_mynard = np.asarray(dP_mynard_list)
 
         if variable == "rout":
-            #plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = f"outlet radius = { np.sqrt(char_val_dict['outlet_radius'][2*i+outlet_ind]):.2f} (cm)", c = colors[i], linewidth=2)
-            plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2, label = f"outlet radius = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} (cm)")
+            plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = f"outlet radius = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} (cm)", c = colors[i], linewidth=2)
+            plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2 )
             #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2, label = f"unified0D_plus")
 
         if variable == "angle":
@@ -125,10 +129,13 @@ def vary_param(anatomy, variable, dP_type):
     return
 
 
-vary_param("Aorta_vary_rout_over_5", "rout", dP_type = "junction")
+# vary_param("Aorta_vary_rout_over_5", "rout", dP_type = "junction")
+#
+# vary_param("Aorta_vary_rout_over_5", "rout", dP_type = "end")
+# vary_param("mynard_vary_rout", "rout", dP_type = "junction")
+#
+# vary_param("mynard_vary_rout", "rout", dP_type = "end")
+#
 
-vary_param("Aorta_vary_rout_over_5", "rout", dP_type = "end")
-vary_param("mynard_vary_rout", "rout", dP_type = "junction")
-
-vary_param("mynard_vary_rout", "rout", dP_type = "end")
-#vary_param("mynard_vary_rout", "rout", dP_type)
+anatomy = sys.argv[1];
+vary_param(anatomy, "rout", "end")

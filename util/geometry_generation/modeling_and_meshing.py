@@ -24,8 +24,8 @@ def construct_model(model_name, segmentations, geo_params):
     #model.write("junction_model_normed", "vtp")
     #tmp = model.get_polydata()
     smooth_model = model.get_polydata()
-    #smoothing_params = {'method':'constrained', 'num_iterations':500}
-    #smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, radius = 2, center = [0, 1, 0], smoothing_parameters = smoothing_params)
+    smoothing_params = {'method':'constrained', 'num_iterations':30}
+    smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, radius = 1, center = [0, 0.2, 0], smoothing_parameters = smoothing_params)
     # [=== Combine faces ===]
     #
     model.set_surface(smooth_model)
@@ -38,7 +38,7 @@ def construct_model(model_name, segmentations, geo_params):
     return model
 
 def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3):
-    edge_size = geo_params["outlet2_radius"]/mesh_divs #geo_params["outlet2_radius"]/500
+    edge_size = geo_params["outlet2_radius"]/3 #mesh_divs #geo_params["outlet2_radius"]/500
     caps = model.identify_caps()
     ids = model.get_face_ids()
     walls = [ids[i] for i,x in enumerate(caps) if not x]
@@ -57,8 +57,9 @@ def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3):
     #   constant_thickness = False)
     options = sv.meshing.TetGenOptions(global_edge_size = edge_size, surface_mesh_flag=True, volume_mesh_flag=True)
 
-    # options.sphere_refinement_on = True
-    # options.sphere_refinement =list({'edge_size':float, 'radius':float, 'center':[float, float, float]})
+    #
+    options.sphere_refinement.append({'edge_size':edge_size*mesh_divs, 'radius':1, 'center':[0, 0, 0]})
+    options.sphere_refinement_on = True
 
     #options.boundary_layer_inside = True
 

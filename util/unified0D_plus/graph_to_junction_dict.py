@@ -74,9 +74,9 @@ def get_features_from_graph_steady(graph, scaling_dict):
     outlet_dP = graph.nodes["outlet"].data["outlet_dP"].numpy()
     outlet_flows = graph.nodes["outlet"].data["outlet_flows"].numpy()
 
-    features = {"inlet_area": np.asarray(np.pi *np.square(inv_scale(scaling_dict, inlet_data[:,0], "inlet_radius"))).reshape(1,-1), # add inlet area (once per junction)
+    features = {"inlet_area": np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1), # add inlet area (once per junction)
                 "inlet_flow": np.asarray(sum(outlet_flows)).reshape(1,-1),
-                "outlet_area": np.pi * np.square(inv_scale(scaling_dict, outlet_data[:,0], "outlet_radius")).reshape(2,-1), # add outlet area (once per junction)
+                "outlet_area": inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1), # add outlet area (once per junction)
                 "outlet_angle": inv_scale(scaling_dict, outlet_data[:,1], "angle").reshape(2,-1),
                 "inlet_angle": np.asarray(0*outlet_data[:,1]).reshape(1,-1) # add outlet area (once per junction)
                 }

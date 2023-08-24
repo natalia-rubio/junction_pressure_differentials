@@ -7,7 +7,7 @@ from util.synthetic_data_processing.assemble_graphs import *
 from util.synthetic_data_processing.train_val_split import *
 
 anatomy = sys.argv[1];
-collect_synthetic_results_steady(anatomy = anatomy, require4 = True)
+collect_synthetic_results_steady(anatomy = anatomy, require4 = False)
 print("Extracted simulation results.")
 
 get_coefs_steady(anatomy = anatomy, rm_low_r2 = True)

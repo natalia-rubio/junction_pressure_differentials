@@ -321,14 +321,15 @@ def write_junction_params_mynard_rand():
                     "outlet2_angle": outlet2_angle,
                     "inlet_flow": inlet_flow}
     for param in params_rand.keys():
-        params_rand[param] *= 0.8 + (0.4*np.random.default_rng(seed=None).random())
+
+        params_rand[param] *= (1 + 0.2*np.random.default_rng(seed=None).random())
 
     return params_rand
 
 if __name__ == '__main__':
     #write_junction_params_mynard()
     #write_pipe_params_sweep_mesh()
-    #write_mynard_junction_params_sweep_outlet_radius()
-    #write_rout_sweep_junctions(anatomy = "Aorta_vary_rout", start = 0, num_junctions = 3)
+    write_mynard_junction_params_sweep_outlet_radius()
+    #write_rout_sweep_junctions(anatomy = "mynard_vary_rout", start = 0, num_junctions = 3)
     #write_anatomy_junctions(anatomy = "Aorta_u_40-60", start = 0, num_junctions = 200)
-    write_mynard_junctions_rand(num_junctions = 200)
+    #write_mynard_junctions_rand(num_junctions = 150)
