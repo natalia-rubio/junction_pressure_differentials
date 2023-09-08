@@ -13,7 +13,7 @@ def print_stats(char_val_dict, anatomy, value):
     print(f"Mean: {np.mean(dat)}.  Standard Deviation {np.std(dat)}.")
     print("---------------------------------------------------------")
     return
-    
+
 def extract_characteristic_values():
     """
     Compile list of junction graphs (from synthetic data)
@@ -21,8 +21,8 @@ def extract_characteristic_values():
 
     # relevant file paths:
     results_dir = "data/characteristic_value_dictionaries/vmr_char_val_dict"
-    soln_dir = "/home/nrubio/Desktop/junction_ml/data/3d_flow_repository_aortas"
-    centerline_dir = "/home/nrubio/Desktop/junction_ml/data/3d_flow_repository_aortas/centerlines"
+    soln_dir = "/home/nrubio/Desktop/junction_ml/data/3d_flow_repository"
+    centerline_dir = "/home/nrubio/Desktop/junction_ml/data/centerlines"
     anatomy_map_loc = "/home/nrubio/Desktop/junction_ml/data/model_labels_osmsc.csv"
 
     anatomy_map = np.genfromtxt(anatomy_map_loc, delimiter = "," , skip_header = 1, usecols = (0, 3), dtype = "str")
@@ -42,6 +42,7 @@ def extract_characteristic_values():
                                             "inlet_radius": [],
                                             "angle": [],
                                             "flow": [],
+                                            "inlet_flow": [],
                                             "dP": [],
                                             "P": [],
                                             "name": []}})
@@ -50,7 +51,7 @@ def extract_characteristic_values():
             pt_id, num_pts, branch_id, junction_id, area, angle1, angle2, angle3, pressure_in_time, flow_in_time, times, time_interval = \
             load_vmr_model_data(model, soln_dir)
             junction_dict = identify_junctions(junction_id, branch_id, pt_id)
-
+            #
         except: print("Geometry Error."); continue
 
         try:
@@ -81,6 +82,7 @@ def extract_characteristic_values():
 
 
                 flow = list(flow_in_time_aug[max_flow_ind, outlet_pts])
+                inlet_flow = list(flow_in_time_aug[max_flow_ind, inlet_pts])+list(flow_in_time_aug[max_flow_ind, inlet_pts])
                 p = list(pressure_in_time_aug[max_flow_ind, outlet_pts]*0 + pressure_in_time_aug[max_flow_ind, outlet_pts])
                 dp = list(pressure_in_time_aug[max_flow_ind, outlet_pts] - pressure_in_time_aug[max_flow_ind, inlet_pts])
                 radius = list(np.sqrt(area[outlet_pts]/np.pi))
@@ -90,6 +92,7 @@ def extract_characteristic_values():
                     print("Skipping!")
                     continue
                 char_val_dict[anatomy]["flow"] += flow
+                char_val_dict[anatomy]["inlet_flow"] += inlet_flow
                 char_val_dict[anatomy]["P"] += p
                 char_val_dict[anatomy]["dP"] += dp
                 char_val_dict[anatomy]["radius"] += radius
@@ -109,8 +112,9 @@ def print_aorta_study():
 
     for anatomy in char_val_dict.keys():
         char_val_dict[anatomy].update({"velocity": np.asarray(char_val_dict[anatomy]["flow"])/ (np.pi*np.square(char_val_dict[anatomy]["radius"]))})
+        char_val_dict[anatomy].update({"inlet_velocity": np.asarray(char_val_dict[anatomy]["inlet_flow"])/ (np.pi*np.square(char_val_dict[anatomy]["inlet_radius"]))})
         char_val_dict[anatomy].update({"radius_ratio": np.asarray(char_val_dict[anatomy]["radius"])/ np.asarray(char_val_dict[anatomy]["inlet_radius"])})
-        value_list = ["flow", "angle", "inlet_radius", "velocity", "radius_ratio"]
+        value_list = ["flow", "angle", "inlet_radius", "velocity", "radius_ratio", "inlet_velocity"]
 
         param_stat_dict.update({anatomy:{}})
 
@@ -122,7 +126,7 @@ def print_aorta_study():
                                             np.mean(dat),
                                             np.std(dat)]})
 
-
+    print(param_stat_dict)
     params_stat_dir = "data/param_stat_dict"
     save_dict(param_stat_dict, params_stat_dir)
 

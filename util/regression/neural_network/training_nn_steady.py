@@ -7,6 +7,8 @@ def print_error(train_results, val_results, epoch):
     msg = '{:.0f}\t'.format(epoch)
     msg = msg + 'Train RMSE = {:.2e}.  '.format(train_results['dP_loss']/train_results['count'])
     msg = msg + 'Validation RMSE = {:.2e}.'.format(val_results['dP_loss']/val_results['count'])
+    msg = msg + 'Train RMSE (COEF) = {:.2e}.  '.format(train_results['coef_loss']/train_results['count'])
+    msg = msg + 'Validation RMSE (COEF) = {:.2e}.'.format(val_results['coef_loss']/val_results['count'])
     print(msg, flush=True)
     return
 
@@ -68,7 +70,7 @@ def evaluate_model(gnn_model,
     else:
         validation_results = None
 
-    train_batched_tensors = get_batched_tensors_steady(train_master_tensors, batch_size, 0.01)
+    train_batched_tensors = get_batched_tensors_steady(train_master_tensors, batch_size, noise_level = 0)
     train_results = loop_over(dataloader = train_batched_tensors,
                                     gnn_model = gnn_model,
                                     output_name = output_name,
@@ -86,6 +88,12 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
 
     train_dataloader = get_graph_data_loader(train_dataset, batch_size=len(train_dataset))
     train_master_tensors = get_master_tensors_steady(train_dataloader)
+
+    train_input_tensor_data_loader = train_master_tensors[0]
+    train_output_tensor_data_loader = train_master_tensors[1]
+    train_flow_tensor_data_loader = train_master_tensors[2]
+    train_dP_tensor_data_loader = train_master_tensors[3]
+
     validation_dataloader = get_graph_data_loader(validation_dataset, batch_size=len(validation_dataset))
     validation_master_tensors = get_master_tensors_steady(validation_dataloader)
 
@@ -128,25 +136,30 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
         validation_flow_tensor_data_loader,
         validation_dP_tensor_data_loader,
         mse))
+    quad_loss_train = tf.math.sqrt(gnn_model.get_quad_loss(train_output_tensor_data_loader,
+        train_flow_tensor_data_loader,
+        train_dP_tensor_data_loader,
+        mse))
+    print(quad_loss_train)
     if model_name == None:
         model_name = str(network_params["hl_mlp"])[0:4] + "_hl_" + str(network_params["latent_size_mlp"])[0:4] + "_lsmlp_" + (str(train_params["learning_rate"])[0:6]).replace(".", "_") + "_lr_"+ "_bs_" + str(train_params["batch_size"]) + "_nepochs_" + str(train_params["nepochs"]) + anatomy
 
     plt.clf()
-    plt.style.use('dark_background')
-    plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_train_list), color = "cornflowerblue", s=40, alpha = 0.6, marker='o', label="NN (Train)")
-    plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list),  color = "orangered", s=40, alpha = 0.6, marker='d', label="NN (Val)")
-    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+cp_loss, "--", color = "goldenrod", label="Constant Pressure (Val)")
-    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+quad_loss, "--",  color = "yellowgreen", label="True Quadratic Fit (Val)")
+    #plt.style.use('dark_background')
+    plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_train_list), color = "royalblue", s=30, alpha = 0.6, marker='o', label="NN (Train)")
+    plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list),  color = "orangered", s=30, alpha = 0.6, marker='d', label="NN (Val)")
+    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+cp_loss, "--", color = "peru", label="Constant Pressure (Val)")
+    #plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+quad_loss, "--",  color = "seagreen", label="True Quadratic Fit (Val)")
     plt.xlabel("epoch"); plt.ylabel("RMSE (mmHg)"); #plt.title(f"MSE Over Epochs"); plt.legend();
     plt.yscale("log")
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1, mode="expand", borderaxespad=0.)
 
-    plt.savefig("results/training_plots/" + model_name + "mse_over_epochs.png", dpi=1200, bbox_inches='tight', transparent=True)
+    plt.savefig("results/training_plots/" + model_name + "mse_over_epochs.png", dpi=1200, bbox_inches='tight', transparent=False)
 
     loss_history = {"train": mse_dP_train_list,
                     "val": mse_dP_val_list}
 
-    train_mse = train_results['coef_loss']/train_results['count']
-    val_mse = val_results['coef_loss']/val_results['count']
+    train_mse = train_results['dP_loss']/train_results['count']
+    val_mse = val_results['dP_loss']/val_results['count']
 
     return gnn_model, val_mse, train_mse

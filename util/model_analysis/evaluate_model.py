@@ -17,18 +17,20 @@ def dP_poiseuille(flow, radius, length):
 
 def vary_param(anatomy, variable, dP_type):
     plt.clf()
-    model_name = "1_hl_40_lsmlp_0_02_lr_0_05_lrd_1e-05_wd_bs_4_nepochs_200_seed_0_geos_89"
+    #model_name = "1_hl_20_lsmlp_0_02_lr_0_7_lrd_1e-05_wd_bs_8_nepochs_200_seed_0_geos_187"#mynard
+    model_name = "1_hl_20_lsmlp_0_02_lr_0_7_lrd_1e-05_wd_bs_5_nepochs_200_seed_0_geos_110"#aorta
     nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name, compile=True)
 
     #junction_params = load_dict(f"/home/nrubio/Desktop/synthetic_junctions/Aorta_vary_r2/{geo}/junction_params_dict")
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_vary_rout_synthetic_data_dict_steady")
     #char_val_dict0 = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout/synthetic_data_dict_steady")
     #print(char_val_dict)
-    scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
+    #scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
+    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_rand_scaling_dict_steady")
     print(scaling_dict)
     #scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_u_40-60_over3_scaling_dict_steady")
     dPs = []
-
+    print(char_val_dict)
     for i in range(int(len(char_val_dict["name"])/2)):
 
         if i/int(len(char_val_dict["name"])/2) < 0.5:
@@ -67,15 +69,15 @@ def vary_param(anatomy, variable, dP_type):
 
         with tf.device("/cpu:0"):
 
-            graph.nodes["inlet"].data["inlet_features"] = tf.reshape(tf.convert_to_tensor(inlet_data, dtype=tf.float32), [1,1])
-            graph.nodes["outlet"].data["outlet_features"] = tf.convert_to_tensor(outlet_data, dtype=tf.float32)
-            graph.nodes["outlet"].data["outlet_flows"] = tf.convert_to_tensor(outlet_flows, dtype=tf.float32)
+            graph.nodes["inlet"].data["inlet_features"] = tf.reshape(tf.convert_to_tensor(inlet_data, dtype=tf.float64), [1,1])
+            graph.nodes["outlet"].data["outlet_features"] = tf.convert_to_tensor(outlet_data, dtype=tf.float64)
+            graph.nodes["outlet"].data["outlet_flows"] = tf.convert_to_tensor(outlet_flows, dtype=tf.float64)
             if dP_type == "end":
-                graph.nodes["outlet"].data["outlet_dP"] = tf.convert_to_tensor(outlet_dPs, dtype=tf.float32)
+                graph.nodes["outlet"].data["outlet_dP"] = tf.convert_to_tensor(outlet_dPs, dtype=tf.float64)
             elif dP_type == "junction":
-                graph.nodes["outlet"].data["outlet_dP"] = tf.convert_to_tensor(outlet_junction_dPs, dtype=tf.float32)
+                graph.nodes["outlet"].data["outlet_dP"] = tf.convert_to_tensor(outlet_junction_dPs, dtype=tf.float64)
             graph.nodes["inlet"].data["geo_name"] = tf.constant([geo_name])
-            graph.nodes["outlet"].data["outlet_coefs"] = tf.convert_to_tensor(outlet_coefs, dtype=tf.float32)
+            graph.nodes["outlet"].data["outlet_coefs"] = tf.convert_to_tensor(outlet_coefs, dtype=tf.float64)
         print(graph.nodes["outlet"].data)
 
         master_tensor = get_master_tensors_steady([graph])
@@ -87,7 +89,7 @@ def vary_param(anatomy, variable, dP_type):
         inflow_tensor_cont =  tf.linspace(flow_tensor[0,0], flow_tensor[0,-1], 100) \
                             + tf.linspace(flow_tensor[1,0], flow_tensor[1,-1], 100)
 
-        pred_outlet_coefs = tf.cast(nn_model.predict(input_tensor), dtype=tf.float32)
+        pred_outlet_coefs = tf.cast(nn_model.predict(input_tensor), dtype=tf.float64)
 
         pred_dP = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,0], "coef_a"), (-1,1)) * tf.square(flow_tensor_cont) + \
                     tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,1], "coef_b"), (-1,1)) * flow_tensor_cont
@@ -109,6 +111,7 @@ def vary_param(anatomy, variable, dP_type):
 
         if variable == "rout":
             plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = f"outlet radius = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} (cm)", c = colors[i], linewidth=2)
+            
             plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2 )
             #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2, label = f"unified0D_plus")
 

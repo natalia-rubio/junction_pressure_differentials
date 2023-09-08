@@ -11,24 +11,25 @@ import pdb
 tf.keras.regularizers.L2(l2=0.1)
 
 def inv_scale_tf(scaling_dict, field, field_name):
-    mean = tf.constant(scaling_dict[field_name][0], dtype = "float32")
-    std = tf.constant(scaling_dict[field_name][1], dtype = "float32")
+    mean = tf.constant(scaling_dict[field_name][0], dtype = "float64")
+    std = tf.constant(scaling_dict[field_name][1], dtype = "float64")
     scaled_field = tf.add(tf.multiply(field, std), mean)
     return scaled_field
 
 
 def MLP(in_feats, latent_space, out_feats, n_h_layers):
-    initializer = tf.keras.initializers.Zeros()
+    #initializer = tf.keras.initializers.Zeros()
+    initializer = tf.keras.initializers.RandomNormal()
 
-    encoder_in = tf.keras.layers.Dense(latent_space, activation="relu", use_bias = True)
-    encoder_out = tf.keras.layers.Dense(out_feats, activation=None, use_bias = True)
+    encoder_in = tf.keras.layers.Dense(latent_space, activation="relu", use_bias = True, dtype=tf.float64)
+    encoder_out = tf.keras.layers.Dense(out_feats, activation=None, use_bias = True, dtype=tf.float64)
     n_h_layers = n_h_layers
 
     model = tf.keras.Sequential()
     model.add(encoder_in)
     #model.add(tf.keras.layers.LeakyReLU())
     for i in range(n_h_layers):
-        model.add(tf.keras.layers.Dense(latent_space, activation="relu", use_bias = True
+        model.add(tf.keras.layers.Dense(latent_space, activation="relu", use_bias = True, dtype=tf.float64
                                             ))
         #model.add(tf.keras.layers.LeakyReLU())
     model.add(encoder_out)
@@ -67,7 +68,7 @@ class GraphNet(tf.Module):
 
         with tf.GradientTape() as tape:
             tape.reset()
-            pred_outlet_output = tf.cast(self.forward(batched_graph), dtype=tf.float32)
+            pred_outlet_output = tf.cast(self.forward(batched_graph), dtype=tf.float64)
             true_outlet_output = output_tensor
             #loss_value = loss(pred_outlet_output, true_outlet_output)
             loss_value = self.get_dP_loss(batched_graph, flow_tensor, dP_tensor, loss)
@@ -77,12 +78,12 @@ class GraphNet(tf.Module):
 
             grads = tape.gradient(loss_value, model.trainable_weights)
             optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
+        #import pdb; pdb.set_trace()
         return loss_value
 
     def get_dP_loss(self, input_tensor, flow_tensor, dP_tensor, loss):
 
-        pred_outlet_coefs = tf.cast(self.forward(input_tensor), dtype=tf.float32)
+        pred_outlet_coefs = tf.cast(self.forward(input_tensor), dtype=tf.float64)
         pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
                     tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor #+ \
                     #tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,2], "coef_c"), (-1,1)) * (0*flow_tensor + 1)

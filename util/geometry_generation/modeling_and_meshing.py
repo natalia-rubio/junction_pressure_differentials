@@ -34,21 +34,23 @@ def construct_model(model_name, segmentations, geo_params):
     model, walls, caps, ids = combine_walls(model)
     model = combine_caps(model, walls, ids, num_caps = 3)
     print("boundary faces computed")
+    model.write("junction_model", "vtp")
 
     return model
 
-def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3):
-    edge_size = geo_params["outlet2_radius"]/3 #mesh_divs #geo_params["outlet2_radius"]/500
+def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3, sphere_ref = 0.1, sphere_offset = 0):
+    edge_size = geo_params["outlet2_radius"]/mesh_divs #geo_params["outlet2_radius"]/500
     caps = model.identify_caps()
     ids = model.get_face_ids()
     walls = [ids[i] for i,x in enumerate(caps) if not x]
     faces = model.get_face_ids()
     cap_faces = [ids[i] for i,x in enumerate(caps) if x]
     print(cap_faces)
-    max_area_cap = 2
-    out_caps = copy.copy(cap_faces)
-    out_caps.remove(max_area_cap)
-    centerlines = model.compute_centerlines(inlet_ids = [max_area_cap], outlet_ids = out_caps, use_face_ids = True)
+    # max_area_cap = get_inlet_cap(mesher, walls):
+    #
+    # out_caps = copy.copy(cap_faces)
+    # out_caps.remove(max_area_cap)
+    # centerlines = model.compute_centerlines(inlet_ids = [max_area_cap], outlet_ids = out_caps, use_face_ids = True)
 
     mesher = sv.meshing.create_mesher(sv.meshing.Kernel.TETGEN)
     mesher.set_model(model)
@@ -58,7 +60,7 @@ def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3):
     options = sv.meshing.TetGenOptions(global_edge_size = edge_size, surface_mesh_flag=True, volume_mesh_flag=True)
 
     #
-    options.sphere_refinement.append({'edge_size':edge_size*mesh_divs, 'radius':1, 'center':[0, 0, 0]})
+    options.sphere_refinement.append({'edge_size':edge_size*sphere_ref, 'radius':1, 'center':[0, sphere_offset, 0]})
     options.sphere_refinement_on = True
 
     #options.boundary_layer_inside = True

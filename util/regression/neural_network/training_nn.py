@@ -148,10 +148,10 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
 
     plt.clf()
     plt.style.use('dark_background')
-    plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_train_list), color = "cornflowerblue", s=40, alpha = 0.6, marker='o', label="NN (Train)")
+    plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_train_list), color = "royalblue", s=40, alpha = 0.6, marker='o', label="NN (Train)")
     plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list),  color = "orangered", s=40, alpha = 0.6, marker='d', label="NN (Val)")
-    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+cp_loss, "--", color = "goldenrod", label="Constant Pressure (Val)")
-    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+quad_loss, "--",  color = "yellowgreen", label="True Quadratic Fit (Val)")
+    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+cp_loss, "--", color = "peru", label="Constant Pressure (Val)")
+    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+quad_loss, "--",  color = "seagreen", label="True Quadratic Fit (Val)")
     plt.xlabel("epoch"); plt.ylabel("RMSE (mmHg)"); #plt.title(f"MSE Over Epochs"); plt.legend();
     plt.yscale("log")
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1, mode="expand", borderaxespad=0.)

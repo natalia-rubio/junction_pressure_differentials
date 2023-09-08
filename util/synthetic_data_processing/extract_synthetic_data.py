@@ -18,12 +18,13 @@ def collect_synthetic_results_steady(anatomy, require4 = True):
                     "name": []}
 
     home_dir = os.path.expanduser("~")
-    geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}"); geos.sort()
+    geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}"); geos.sort(); print(geos)
 
     for j, geo in enumerate(geos[0:]):
 
         try:
             junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{geo}/junction_params_dict")
+            print(junction_params)
             results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/"
 
             flow_lists = [[0],[0]]
@@ -40,7 +41,7 @@ def collect_synthetic_results_steady(anatomy, require4 = True):
                         else:
                             continue
                     soln_dict = load_dict(flow_result_dir)
-                    #print(geo); print(soln_dict)
+                    print(geo); print(soln_dict)
 
                     for outlet_ind in range(2):
                         flow_lists[outlet_ind] += [soln_dict["flow"][outlet_ind]]
@@ -56,8 +57,6 @@ def collect_synthetic_results_steady(anatomy, require4 = True):
             char_val_dict["flow_list"] += flow_lists
             char_val_dict["dP_list"] += dP_lists
             char_val_dict["dP_junc_list"] += dP_junc_lists
-            #char_val_dict["inlet_radius"] += [junction_params["inlet_radius"]**2, junction_params["inlet_radius"]**2]
-            #char_val_dict["outlet_radius"] += [junction_params["outlet1_radius"]**2, junction_params["outlet2_radius"]**2]
 
             char_val_dict["inlet_radius"] += [np.sqrt(soln_dict["area"][2]/np.pi), np.sqrt(soln_dict["area"][2]/np.pi)]
             char_val_dict["outlet_radius"] += [np.sqrt(soln_dict["area"][0]/np.pi), np.sqrt(soln_dict["area"][1]/np.pi)]

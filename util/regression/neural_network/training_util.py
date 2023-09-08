@@ -40,8 +40,8 @@ def mae(input, target, weight = None):
     return tf.math.reduce_mean(weight * (tf.math.abs(input - target)))
 
 def inv_scale_tf(scaling_dict, field, field_name):
-    mean = tf.constant(scaling_dict[field_name][0], dtype = "float32")
-    std = tf.constant(scaling_dict[field_name][1], dtype = "float32")
+    mean = tf.constant(scaling_dict[field_name][0], dtype = "float64")
+    std = tf.constant(scaling_dict[field_name][1], dtype = "float64")
     scaled_field = tf.add(tf.multiply(field, std), mean)
     return scaled_field
 
@@ -91,44 +91,44 @@ def get_master_tensors_steady(dataloader):
                             g.nodes["outlet"].data['outlet_features'][::2,:]), axis = 1)
     input = tf.concat((input1, input2), axis = 0)
 
-    output1 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float32)[::2,:]
-    output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float32)[1::2,:]
+    output1 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float64)[::2,:]
+    output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float64)[1::2,:]
     output = tf.concat((output1, output2), axis = 0)
 
-    flow1 = tf.cast(g.nodes['outlet'].data['outlet_flows'], dtype=tf.float32)[::2,:]
-    flow2 = tf.cast(g.nodes['outlet'].data['outlet_flows'], dtype=tf.float32)[1::2,:]
+    flow1 = tf.cast(g.nodes['outlet'].data['outlet_flows'], dtype=tf.float64)[::2,:]
+    flow2 = tf.cast(g.nodes['outlet'].data['outlet_flows'], dtype=tf.float64)[1::2,:]
     flow = tf.concat((flow1, flow2), axis = 0)
 
-    dP1 = tf.cast(g.nodes['outlet'].data['outlet_dP'], dtype=tf.float32)[::2,:]
-    dP2 = tf.cast(g.nodes['outlet'].data['outlet_dP'], dtype=tf.float32)[1::2,:]
+    dP1 = tf.cast(g.nodes['outlet'].data['outlet_dP'], dtype=tf.float64)[::2,:]
+    dP2 = tf.cast(g.nodes['outlet'].data['outlet_dP'], dtype=tf.float64)[1::2,:]
     dP= tf.concat((dP1, dP2), axis = 0)
     #import pdb; pdb.set_trace()
     return (input, output, flow, dP)
 
 def get_master_tensors(dataloader):
     g = dataloader[0]
-    input1 = tf.concat((g.nodes["inlet"].data['inlet_features'],
+    input1 = tf.cast(tf.concat((g.nodes["inlet"].data['inlet_features'],
                             g.nodes["outlet"].data['outlet_features'][::2,:],
-                            g.nodes["outlet"].data['outlet_features'][1::2,:]), axis = 1)
-    input2 = tf.concat((g.nodes["inlet"].data['inlet_features'],
+                            g.nodes["outlet"].data['outlet_features'][1::2,:]), axis = 1), dtype=tf.float64)
+    input2 = tf.cast(tf.concat((g.nodes["inlet"].data['inlet_features'],
                             g.nodes["outlet"].data['outlet_features'][1::2,:],
-                            g.nodes["outlet"].data['outlet_features'][::2,:]), axis = 1)
-    input = tf.concat((input1, input2), axis = 0)
+                            g.nodes["outlet"].data['outlet_features'][::2,:]), axis = 1), dtype=tf.float64)
+    input = tf.cast(tf.concat((input1, input2), axis = 0), dtype=tf.float64)
 
-    output1 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float32)[::2,:]
-    output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float32)[1::2,:]
+    output1 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float64)[::2,:]
+    output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float64)[1::2,:]
     output = tf.concat((output1, output2), axis = 0)
 
-    flow1 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flows'], dtype=tf.float32)[::2,:]
-    flow2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flows'], dtype=tf.float32)[1::2,:]
+    flow1 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flows'], dtype=tf.float64)[::2,:]
+    flow2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flows'], dtype=tf.float64)[1::2,:]
     flow = tf.concat((flow1, flow2), axis = 0)
 
-    flow_der1 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flow_ders'], dtype=tf.float32)[::2,:]
-    flow_der2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flow_ders'], dtype=tf.float32)[1::2,:]
+    flow_der1 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flow_ders'], dtype=tf.float64)[::2,:]
+    flow_der2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flow_ders'], dtype=tf.float64)[1::2,:]
     flow_der = tf.concat((flow_der1, flow_der2), axis = 0)
 
-    dP1 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_dP'], dtype=tf.float32)[::2,:]
-    dP2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_dP'], dtype=tf.float32)[1::2,:]
+    dP1 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_dP'], dtype=tf.float64)[::2,:]
+    dP2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_dP'], dtype=tf.float64)[1::2,:]
     dP= tf.concat((dP1, dP2), axis = 0)
     #import pdb; pdb.set_trace()
     return (input, output, flow, flow_der, dP)
@@ -137,7 +137,8 @@ def get_noise(input_tensor, noise_level):
 
     noise = tf.random.normal(input_tensor.shape,
                                 mean=0,
-                                stddev=noise_level)
+                                stddev=noise_level,
+                                dtype = tf.float64)
     return noise
 
 def get_batched_tensors(master_tensors, batch_size, noise_level):

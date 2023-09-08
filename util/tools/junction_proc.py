@@ -184,9 +184,9 @@ def load_soln_data(soln_dict):
 
     return pressure_in_time, flow_in_time, times, time_interval
 
-def load_vmr_model_data(fpath_1dsol):
+def load_vmr_model_data(model, fpath_1dsol):
     time_interval = 0.1
-    soln = read_geo(fpath_1dsol).GetOutput()  # get 3d flow data
+    soln = read_geo(fpath_1dsol+"/"+model).GetOutput()  # get 3d flow data
     soln_array = get_all_arrays(soln)
     #Extract Geometry ----------------------------------------------------
     pt_id = soln_array["GlobalNodeId"].astype(int)

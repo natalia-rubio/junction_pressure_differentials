@@ -40,7 +40,7 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
     network_params = {
                    'latent_size_gnn':3,
-                   'latent_size_mlp': 40,
+                   'latent_size_mlp': 20,
                    'out_size': 2,
                    'process_iterations': 1,
                    'hl_mlp': 1,
@@ -51,7 +51,7 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
                    'output_name': "outlet_coefs"}
 
     train_params = {'learning_rate': 0.02,
-                    'lr_decay': 0.05,
+                    'lr_decay': 0.7,
                     'momentum': 0.0,
                     'batch_size': int(np.ceil(len(train_dataset)/20)),
                     'nepochs': 200,
@@ -78,5 +78,5 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
 if __name__ == "__main__":
 
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "mynard_rand", num_geos = 89,  seed = 0)
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 110,  seed = 0)
     print(f"Train MSE: {train_mse}.  Val MSE {val_mse}.")
