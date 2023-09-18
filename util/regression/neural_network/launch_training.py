@@ -33,36 +33,33 @@ def save_model(gnn_model, model_name):
 
     return
 
-def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", graph_arr = 0, model_list = 0):
+def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", graph_arr = 0, model_list = 0, unsteady = False):
 
     train_dataset = load_dict(f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
     val_dataset = load_dict(f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
 
     network_params = {
-                   'latent_size_gnn':3,
                    'latent_size_mlp': 20,
                    'out_size': 2,
                    'process_iterations': 1,
                    'hl_mlp': 1,
-                   'normalize': 1,
-                   'average_flowrate_training': 0,
                    'num_inlet_ft' : 1,
                    'num_outlet_ft': 2,
+                   'unsteady': unsteady,
                    'output_name': "outlet_coefs"}
+    if unsteady:
+        network_params["out_size"] = 3
 
     train_params = {'learning_rate': 0.02,
                     'lr_decay': 0.7,
-                    'momentum': 0.0,
                     'batch_size': int(np.ceil(len(train_dataset)/20)),
                     'nepochs': 200,
-                    'continuity_coeff': -2,
-                    'bc_coeff': -3,
                     'weight_decay': 10**(-5),
                     'optimizer_name' : "adam"}
 
     model_name = get_model_name(network_params = network_params, train_params = train_params, seed = seed, num_geos = num_geos)
     print(f"Launching training.")
-    gnn_model = GraphNet(anatomy, network_params)
+    gnn_model = GraphNet(anatomy, network_params, unsteady)
     gnn_model, val_mse, train_mse = train_gnn_model(anatomy,
                                                     gnn_model,
                                                       train_dataset,
@@ -78,5 +75,5 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
 if __name__ == "__main__":
 
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 110,  seed = 0)
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 102,  seed = 0, unsteady = True)
     print(f"Train MSE: {train_mse}.  Val MSE {val_mse}.")

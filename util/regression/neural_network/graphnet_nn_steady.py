@@ -37,16 +37,17 @@ def MLP(in_feats, latent_space, out_feats, n_h_layers):
     return model
 
 class GraphNet(tf.Module):
-    def __init__(self, anatomy, params):
+    def __init__(self, anatomy, params, unsteady):
         super(GraphNet, self).__init__()
 
+        self.unsteady = unsteady
         self.nn_model = MLP(params["num_inlet_ft"] + 2*params["num_outlet_ft"],
                                         params['latent_size_mlp'],
                                         params['out_size'],
                                         params['hl_mlp'])
 
         self.params = params
-        self.scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
+        self.scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
 
     def get_model_list(self):
         model_list = [self.nn_model]
@@ -64,14 +65,15 @@ class GraphNet(tf.Module):
         #import pdb; pdb.set_trace()
         return stacked_output
 
-    def update_nn_weights(self, batched_graph, output_tensor, flow_tensor, dP_tensor, optimizer, loss, output_name):
+    def update_nn_weights(self, batched_graph, output_tensor, flow_tensor, flow_der_tensor, dP_tensor, optimizer, loss, output_name):
 
         with tf.GradientTape() as tape:
             tape.reset()
             pred_outlet_output = tf.cast(self.forward(batched_graph), dtype=tf.float64)
             true_outlet_output = output_tensor
             #loss_value = loss(pred_outlet_output, true_outlet_output)
-            loss_value = self.get_dP_loss(batched_graph, flow_tensor, dP_tensor, loss)
+            loss_value = self.get_dP_loss(batched_graph, flow_tensor,flow_der_tensor, dP_tensor, loss)
+
 
         model_list =  self.get_model_list()
         for model in model_list:
@@ -81,24 +83,30 @@ class GraphNet(tf.Module):
         #import pdb; pdb.set_trace()
         return loss_value
 
-    def get_dP_loss(self, input_tensor, flow_tensor, dP_tensor, loss):
+    def get_dP_loss(self, input_tensor, flow_tensor, flow_der_tensor, dP_tensor, loss):
 
         pred_outlet_coefs = tf.cast(self.forward(input_tensor), dtype=tf.float64)
-        pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
-                    tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor #+ \
-                    #tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,2], "coef_c"), (-1,1)) * (0*flow_tensor + 1)
+        if self.unsteady:
+            pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
+            tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor  + \
+                    tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,2], "coef_L"), (-1,1)) * flow_der_tensor
+        else:
+            pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
+            tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor
 
         #dP_loss = loss(pred_dP[::2]/1333, dP_tensor[::2]/1333)
         dP_loss = loss(pred_dP/1333, dP_tensor/1333)
         return dP_loss
 
-    def get_quad_loss(self, output_tensor, flow_tensor, dP_tensor, loss):
+    def get_quad_loss(self, output_tensor, flow_tensor, flow_der_tensor, dP_tensor, loss):
         #import pdb; pdb.set_trace()
         true_a = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,0], "coef_a"),(-1,1))
         true_b = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,1], "coef_b"),(-1,1))
-        #true_c = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,2], "coef_c"),(-1,1))
 
-        dP_qfit = (true_a * flow_tensor**2) + (true_b * flow_tensor) #+ true_c)
-        #quad_loss = loss(dP_qfit[::2]/1333, dP_tensor[::2]/1333)
+        if self.unsteady:
+            true_L = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,2], "coef_L"),(-1,1))
+            dP_qfit = (true_a * flow_tensor**2) + (true_b * flow_tensor) + (true_L * flow_der_tensor)
+        else:
+            dP_qfit = (true_a * flow_tensor**2) + (true_b * flow_tensor)
         quad_loss = loss(dP_qfit/1333, dP_tensor/1333)
         return quad_loss

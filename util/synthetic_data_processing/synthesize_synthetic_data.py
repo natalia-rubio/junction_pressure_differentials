@@ -2,12 +2,13 @@ import sys
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 
-def get_coefs_steady(anatomy, rm_low_r2 = True):
+def get_coefs(anatomy, rm_low_r2 = True, unsteady = False):
 
     num_outlets = 2
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
     char_val_dict.update({"coef_a": [],
-                    "coef_b": []})
+                    "coef_b": [],
+                    "coef_L": []})
     to_rm = []
     for outlet_ind, geo in enumerate(char_val_dict["name"]):
 
@@ -22,16 +23,30 @@ def get_coefs_steady(anatomy, rm_low_r2 = True):
         if (np.linalg.norm(residuals)/(1333**2))> 0.01:
             print(f"geo: {geo} {(np.linalg.norm(residuals)/(1333**2))}")
 
-        try:
-            r2 = get_r2(X, dP, coefs.reshape(-1,1))
-        except:
-            import pdb; pdb.set_trace()
         a = coefs[0][0]; b = coefs[1][0]
-        if get_r2(X, dP, coefs.reshape(-1,1)) < 0.8: #0.95:
-            to_rm.append(outlet_ind)
-            print(f"{geo} r2: {r2}")
         char_val_dict["coef_a"].append(a)
         char_val_dict["coef_b"].append(b)
+        r2_steady = get_r2(X, dP, coefs.reshape(-1,1))
+
+        r2_unsteady = 0
+        if unsteady:
+            Q_unsteady = char_val_dict["unsteady_flow_list"][outlet_ind]
+            dQdt = char_val_dict["unsteady_flow_der_list"][outlet_ind]
+            dP_unsteady = char_val_dict["unsteady_dP_list"][outlet_ind]
+            dP_steady_pred = a*np.square(Q_unsteady) + b*Q_unsteady
+            dP_unsteady_comp = dP_unsteady - dP_steady_pred
+
+            X_unsteady = dQdt.reshape(-1,1)
+            coefs, residuals, t, q = np.linalg.lstsq(X_unsteady, dP_unsteady_comp, rcond=None);
+            r2_unsteady = get_r2(X_unsteady, dP_unsteady_comp, coefs.reshape(-1,1))
+
+            L = coefs[0]
+            char_val_dict["coef_L"].append(L)
+
+
+        if r2_steady < 0.90 or r2_unsteady < 0.90:
+            to_rm.append(outlet_ind)
+            print(f"{geo} Steady R2: {r2_steady}.  Unsteady R2: {r2_unsteady}.")
 
     if rm_low_r2:
         print(f"Removing {len(to_rm)} outlets for low r2 values.")
@@ -48,7 +63,7 @@ def get_coefs_steady(anatomy, rm_low_r2 = True):
             except:
                 continue
 
-    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
+    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
     return
 
 def remove_outlier_coefs(anatomy, sd_tol):
@@ -70,13 +85,15 @@ def remove_outlier_coefs(anatomy, sd_tol):
     save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
     return
 
-def get_geo_scalings_steady(anatomy):
+def get_geo_scalings(anatomy, unsteady = False):
 
     plt.style.use('dark_background')
 
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
     scaling_dict = {}
     to_normalize = ["outlet_radius","inlet_radius","outlet_area","inlet_area", "angle", "coef_a", "coef_b"]
+    if unsteady:
+        to_normalize.append("coef_L")
     for value in to_normalize:
 
         scaling_dict.update({value: [np.mean(char_val_dict[value]), np.std(char_val_dict[value])]})
@@ -96,7 +113,13 @@ def get_geo_scalings_steady(anatomy):
         plt.clf()
         plt.scatter(char_val_dict[value], np.asarray(char_val_dict["coef_b"]))
         plt.xlabel(value); plt.ylabel("b"); plt.title("Synthetic Aorta Data");
-        plt.savefig(f"results/synthetic_data_trends/b_trends/{value}.png", bbox_inches='tight', transparent=True, format = "png")
+        plt.savefig(f"results/synthetic_data_trends/L_trends/{value}.png", bbox_inches='tight', transparent=True, format = "png")
 
-    save_dict(scaling_dict, f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
+        if unsteady:
+            plt.clf()
+            plt.scatter(char_val_dict[value], np.asarray(char_val_dict["coef_L"]))
+            plt.xlabel(value); plt.ylabel("L"); plt.title("Synthetic Aorta Data");
+            plt.savefig(f"results/synthetic_data_trends/L_trends/{value}.png", bbox_inches='tight', transparent=True, format = "png")
+
+    save_dict(scaling_dict, f"data/scaling_dictionaries/{anatomy}_scaling_dict")
     return

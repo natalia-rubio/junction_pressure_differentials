@@ -14,7 +14,7 @@ def print_error(train_results, val_results, epoch):
 
 
 
-def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None):
+def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None, unsteady = False):
 
     coef_loss = 0
     dP_loss = 0
@@ -23,7 +23,8 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None):
     input_tensors = dataloader[0]
     output_tensors = dataloader[1]
     flow_tensors = dataloader[2]
-    dP_tensors = dataloader[3]
+    flow_der_tensors = dataloader[3]
+    dP_tensors = dataloader[4]
 
     for batch_ind in range(len(dataloader[0])):
         #import pdb; pdb.set_trace()
@@ -34,6 +35,7 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None):
 
         dP_loss_value = tf.math.sqrt(gnn_model.get_dP_loss(input_tensors[batch_ind],
                             flow_tensors[batch_ind],
+                            flow_der_tensors[batch_ind],
                             dP_tensors[batch_ind],
                             loss))
 
@@ -43,6 +45,7 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None):
             loss_value_gnn = gnn_model.update_nn_weights(input_tensors[batch_ind],
                                                      output_tensors[batch_ind],
                                                      flow_tensors[batch_ind],
+                                                     flow_der_tensors[batch_ind],
                                                      dP_tensors[batch_ind],
                                                      optimizer, loss, output_name)
 
@@ -58,10 +61,14 @@ def evaluate_model(gnn_model,
                     optimizer = None,
                     validation_master_tensors = None,
                     output_name = None,
-                    train = True):
+                    train = True,
+                    unsteady = False):
 
     if validation_master_tensors != None:
-        validation_batched_tensors = get_batched_tensors_steady(validation_master_tensors, validation_master_tensors[0].shape[0], 0)
+        if unsteady:
+            validation_batched_tensors = get_batched_tensors_unsteady(validation_master_tensors, validation_master_tensors[0].shape[0], 0)
+        else:
+            validation_batched_tensors = get_batched_tensors_steady(validation_master_tensors, validation_master_tensors[0].shape[0], 0)
         validation_results = loop_over(dataloader = validation_batched_tensors,
                                         gnn_model = gnn_model,
                                         output_name = output_name,
@@ -70,37 +77,52 @@ def evaluate_model(gnn_model,
     else:
         validation_results = None
 
-    train_batched_tensors = get_batched_tensors_steady(train_master_tensors, batch_size, noise_level = 0)
+    if unsteady:
+        train_batched_tensors = get_batched_tensors_unsteady(train_master_tensors, batch_size, noise_level = 0)
+    else:
+        train_batched_tensors = get_batched_tensors_steady(train_master_tensors, batch_size, noise_level = 0)
+
     train_results = loop_over(dataloader = train_batched_tensors,
                                     gnn_model = gnn_model,
                                     output_name = output_name,
                                     loss = loss,
-                                    optimizer = optimizer)
+                                    optimizer = optimizer,
+                                    unsteady = unsteady)
 
     return train_results, validation_results
 
 
 def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train_params, network_params,
-    trial=1, percent_train = 60, model_name = None, index = 0, checkpoint_fct = None):
+    trial=1, percent_train = 60, model_name = None, index = 0,):
+
+    unsteady = network_params["unsteady"]
 
     print('Training dataset contains {:.0f} graphs'.format(len(train_dataset)))
 
 
     train_dataloader = get_graph_data_loader(train_dataset, batch_size=len(train_dataset))
-    train_master_tensors = get_master_tensors_steady(train_dataloader)
+    if unsteady:
+        train_master_tensors = get_master_tensors_unsteady(train_dataloader)
+    else:
+        train_master_tensors = get_master_tensors_steady(train_dataloader)
 
     train_input_tensor_data_loader = train_master_tensors[0]
     train_output_tensor_data_loader = train_master_tensors[1]
     train_flow_tensor_data_loader = train_master_tensors[2]
-    train_dP_tensor_data_loader = train_master_tensors[3]
+    train_flow_der_tensor_data_loader = train_master_tensors[3]
+    train_dP_tensor_data_loader = train_master_tensors[4]
 
     validation_dataloader = get_graph_data_loader(validation_dataset, batch_size=len(validation_dataset))
-    validation_master_tensors = get_master_tensors_steady(validation_dataloader)
+    if unsteady:
+        validation_master_tensors = get_master_tensors_unsteady(validation_dataloader)
+    else:
+        validation_master_tensors = get_master_tensors_steady(validation_dataloader)
 
     validation_input_tensor_data_loader = validation_master_tensors[0]
     validation_output_tensor_data_loader = validation_master_tensors[1]
     validation_flow_tensor_data_loader = validation_master_tensors[2]
-    validation_dP_tensor_data_loader = validation_master_tensors[3]
+    validation_flow_der_tensor_data_loader = validation_master_tensors[3]
+    validation_dP_tensor_data_loader = validation_master_tensors[4]
 
     nepochs = train_params['nepochs']
     learning_rate = get_learning_rate(train_params)
@@ -113,7 +135,8 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
                                                     batch_size = train_params["batch_size"],
                                                     optimizer = optimizer,
                                                     output_name = network_params["output_name"],
-                                                    validation_master_tensors = validation_master_tensors)
+                                                    validation_master_tensors = validation_master_tensors,
+                                                    unsteady = unsteady)
         mse_coef_train_list.append(train_results['coef_loss']/train_results['count'])
         mse_coef_val_list.append(val_results['coef_loss']/val_results['count'])
         mse_dP_train_list.append(train_results['dP_loss']/train_results['count'])
@@ -127,17 +150,20 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
                                                 batch_size = train_params["batch_size"],
                                                 optimizer = optimizer,
                                                 output_name = network_params["output_name"],
-                                                validation_master_tensors = validation_master_tensors)
+                                                validation_master_tensors = validation_master_tensors,
+                                                unsteady = unsteady)
 
 
     cp_loss = tf.math.sqrt(mse(validation_dP_tensor_data_loader*0,
         validation_dP_tensor_data_loader/1333).numpy())
     quad_loss = tf.math.sqrt(gnn_model.get_quad_loss(validation_output_tensor_data_loader,
         validation_flow_tensor_data_loader,
+        validation_flow_der_tensor_data_loader,
         validation_dP_tensor_data_loader,
         mse))
     quad_loss_train = tf.math.sqrt(gnn_model.get_quad_loss(train_output_tensor_data_loader,
         train_flow_tensor_data_loader,
+        train_flow_der_tensor_data_loader,
         train_dP_tensor_data_loader,
         mse))
     print(quad_loss_train)
@@ -148,7 +174,7 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
     #plt.style.use('dark_background')
     plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_train_list), color = "royalblue", s=30, alpha = 0.6, marker='o', label="NN (Train)")
     plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list),  color = "orangered", s=30, alpha = 0.6, marker='d', label="NN (Val)")
-    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+cp_loss, "--", color = "peru", label="Constant Pressure (Val)")
+    plt.plot(np.linspace(1, nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+cp_loss, "--", color = "peru", label="Constant Pressure (Val)")
     #plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+quad_loss, "--",  color = "seagreen", label="True Quadratic Fit (Val)")
     plt.xlabel("epoch"); plt.ylabel("RMSE (mmHg)"); #plt.title(f"MSE Over Epochs"); plt.legend();
     plt.yscale("log")

@@ -25,11 +25,14 @@ def get_features_from_graph(graph, scaling_dict, time_ind):
     outlet_dP = graph.nodes["outlet"].data["unsteady_outlet_dP"].numpy()
     outlet_flows = graph.nodes["outlet"].data["unsteady_outlet_flows"].numpy()[:, time_ind]
 
-    features = {"outlet_dP" : outlet_dP,
-                "inlet_area": np.asarray(np.pi * np.square(inv_scale(scaling_dict, inlet_data[:,0], "inlet_radius"))).reshape(1,-1), # add inlet area (once per junction)
-                "outlet_flow": outlet_flows, # add outlet flow (once per junction)
+    features = {"inlet_area": np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1), # add inlet area (once per junction)
+                "inlet_length": np.asarray(graph.nodes["inlet"].data["inlet_length"].numpy()[:,0]).reshape(1,-1), # add inlet area (once per junction)
+                "inlet_radius": np.sqrt(np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1)/np.pi), # add inlet area (once per junction)
+                "outlet_flow": np.asarray(outlet_flows).reshape(2,-1),
                 "inlet_flow": np.asarray(sum(outlet_flows)).reshape(1,-1),
-                "outlet_area": np.pi * np.square(inv_scale(scaling_dict, outlet_data[:,0], "outlet_radius").reshape(2,-1)), # add outlet area (once per junction)
+                "outlet_area": inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1), # add outlet area (once per junction)
+                "outlet_radius": np.sqrt(inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1)/np.pi), # add outlet area (once per junction)
+                "outlet_length": graph.nodes["outlet"].data["outlet_length"].numpy().reshape(2,-1), # add outlet area (once per junction)
                 "outlet_angle": inv_scale(scaling_dict, outlet_data[:,1], "angle").reshape(2,-1),
                 "inlet_angle": np.asarray(0*outlet_data[:,1]).reshape(1,-1) # add outlet area (once per junction)
                 }
