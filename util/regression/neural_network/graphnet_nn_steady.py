@@ -48,7 +48,9 @@ class GraphNet(tf.Module):
 
         self.params = params
         self.scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
-
+        print(params['out_size'])
+        return
+        
     def get_model_list(self):
         model_list = [self.nn_model]
         return model_list

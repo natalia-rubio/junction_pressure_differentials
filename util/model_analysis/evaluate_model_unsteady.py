@@ -20,7 +20,7 @@ def plot_unsteady(anatomy):
     model_name = f"1_hl_20_lsmlp_0_02_lr_0_7_lrd_1e-05_wd_bs_5_nepochs_200_seed_0_geos_102"
     nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name, compile=True)
     graph_list = load_dict(f"data/graph_lists/{anatomy}/val_Aorta_rand_num_geos_102_seed_0_graph_list")
-    graph = graph_list[0]
+    graph = graph_list[19]
     scaling_dict = load_dict("data/scaling_dictionaries/Aorta_rand_scaling_dict")
 
     master_tensor = get_master_tensors_unsteady([graph])
@@ -44,7 +44,7 @@ def plot_unsteady(anatomy):
                     tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor
     # Apply Unified0D Method
     junction_dict_global = graphs_to_junction_dict([graph_list[0]], scaling_dict)
-    print(junction_dict_global)
+
     flow_arr = flow_tensor.numpy()
     dP_mynard_list = []
 
@@ -56,8 +56,8 @@ def plot_unsteady(anatomy):
     dP_mynard = np.asarray(dP_mynard_list)/1333
 
     plt.clf()
-    plt.plot(np.asarray(flow_tensor), np.asarray(tf.reshape(pred_dP[0,:], [-1,]))/1333, label = 'NN', c = "royalblue", linewidth=2)
-    plt.plot(np.asarray(flow_tensor), np.asarray(tf.reshape(pred_dP_steady[0,:], [-1,]))/1333, label = 'NN Steady', c = "seagreen", linewidth=2)
+    plt.plot(np.asarray(flow_tensor), np.asarray(tf.reshape(pred_dP[0,:], [-1,]))/1333, label = 'RRI (NN)', c = "royalblue", linewidth=2)
+    plt.plot(np.asarray(flow_tensor), np.asarray(tf.reshape(pred_dP_steady[0,:], [-1,]))/1333, label = 'RR (NN)', c = "seagreen", linewidth=2)
     plt.plot(np.asarray(flow_tensor), dP_mynard, label = 'Unified0D+', c = "salmon", linewidth=2, linestyle ="--")
     plt.scatter(np.asarray(flow_tensor), np.asarray(dP_tensor)/1333, label = "Simulation", c = "peru", marker = "*", s = 100)
 

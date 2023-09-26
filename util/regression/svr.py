@@ -79,5 +79,5 @@ def train_svr_model_unsteady(anatomy, num_geos, seed = 0):
                 tf.reshape(inv_scale_tf(scaling_dict, pred_coefs_val[:,1], "coef_b"), (-1,1)) * val_flow + \
                 tf.reshape(inv_scale_tf(scaling_dict, pred_coefs_val[:,2], "coef_L"), (-1,1)) * (val_flow_der)
     dP_loss_val = rmse(pred_dP_val/1333, val_dP/1333)
-
+    import pdb; pdb.set_trace()
     return svr0, dP_loss_val, dP_loss_train

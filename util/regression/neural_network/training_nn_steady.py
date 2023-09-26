@@ -77,18 +77,20 @@ def evaluate_model(gnn_model,
     else:
         validation_results = None
 
-    if unsteady:
-        train_batched_tensors = get_batched_tensors_unsteady(train_master_tensors, batch_size, noise_level = 0)
+    if train_master_tensors != None:
+        if unsteady:
+            train_batched_tensors = get_batched_tensors_unsteady(train_master_tensors, batch_size, noise_level = 0)
+        else:
+            train_batched_tensors = get_batched_tensors_steady(train_master_tensors, batch_size, noise_level = 0)
+
+        train_results = loop_over(dataloader = train_batched_tensors,
+                                        gnn_model = gnn_model,
+                                        output_name = output_name,
+                                        loss = loss,
+                                        optimizer = optimizer,
+                                        unsteady = unsteady)
     else:
-        train_batched_tensors = get_batched_tensors_steady(train_master_tensors, batch_size, noise_level = 0)
-
-    train_results = loop_over(dataloader = train_batched_tensors,
-                                    gnn_model = gnn_model,
-                                    output_name = output_name,
-                                    loss = loss,
-                                    optimizer = optimizer,
-                                    unsteady = unsteady)
-
+        train_results = None
     return train_results, validation_results
 
 
@@ -188,4 +190,33 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
     train_mse = train_results['dP_loss']/train_results['count']
     val_mse = val_results['dP_loss']/val_results['count']
 
+    get_best_worst = True
+    if get_best_worst:
+        best = 100; best_ind = 0
+        worst = 0; worst_ind = 0
+        #import pdb; pdb.set_trace()
+        for i, graph in enumerate(validation_dataset):
+            validation_dataloader = validation_dataset[i]
+            if unsteady:
+                validation_master_tensors = get_master_tensors_unsteady([validation_dataloader])
+            else:
+                validation_master_tensors = get_master_tensors_steady([validation_dataloader])
+
+            train_results, val_results = evaluate_model(gnn_model = gnn_model,
+                                                        train_master_tensors = train_master_tensors,
+                                                        loss = mse,
+                                                        batch_size = train_params["batch_size"],
+                                                        optimizer = optimizer,
+                                                        output_name = network_params["output_name"],
+                                                        validation_master_tensors = validation_master_tensors,
+                                                        unsteady = unsteady)
+            import pdb; pdb.set_trace()
+            if val_results['dP_loss'] < best:
+                best_ind = i
+                best = val_results['dP_loss']
+            if val_results['dP_loss'] > worst:
+                worst_ind = i
+                worst = val_results['dP_loss']
+        print(f"Best index: {best_ind} ({best})")
+        print(f"Worst index: {worst_ind} ({worst})")
     return gnn_model, val_mse, train_mse

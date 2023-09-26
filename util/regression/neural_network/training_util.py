@@ -37,6 +37,10 @@ def rmse(input, target):
     assert input.shape == target.shape, f"Input({input.shape}) and Target ({target.shape}) must have the same shape"
     return tf.math.sqrt(tf.math.reduce_mean(tf.square(input - target)))
 
+def rmse_numpy(input, target):
+    #import pdb; pdb.set_trace()
+    assert input.shape == target.shape, f"Input({input.shape}) and Target ({target.shape}) must have the same shape"
+    return np.sqrt(np.mean(np.square(input - target)))
 
 def mae(input, target, weight = None):
     if weight == None:
@@ -96,8 +100,8 @@ def get_master_tensors_steady(dataloader):
                             g.nodes["outlet"].data['outlet_features'][::2,:]), axis = 1)
     input = tf.concat((input1, input2), axis = 0)
 
-    output1 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float64)[::2,:]
-    output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float64)[1::2,:]
+    output1 = tf.cast(g.nodes['outlet'].data['outlet_coefs'][:,0:2], dtype=tf.float64)[::2,:]
+    output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'][:,0:2], dtype=tf.float64)[1::2,:]
     output = tf.concat((output1, output2), axis = 0)
 
     flow1 = tf.cast(g.nodes['outlet'].data['outlet_flows'], dtype=tf.float64)[::2,:]

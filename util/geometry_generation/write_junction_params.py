@@ -372,11 +372,59 @@ def write_junction_params_mynard_rand():
 
     return params_rand
 
+def print_mynard_ranges():
+
+    inlet_radius = 0.55
+    outlet1_angle = 45
+    outlet2_angle = 45
+
+    outlet1_radius = 0.55
+    outlet2_radius = 0.55
+
+    re = 1800
+    viscosity = 0.04
+    density = 1.06
+    U_in = re * viscosity / (density * 2 * inlet_radius)
+
+
+    inlet_flow = (U_in/2) * (np.pi* inlet_radius**2)
+
+    print(inlet_flow)
+    params_rand = {"inlet_radius" : inlet_radius,
+                    "outlet1_radius": outlet1_radius,
+                    "outlet2_radius": outlet2_radius,
+                    "outlet1_angle": outlet1_angle,
+                    "outlet2_angle": outlet2_angle,
+                    "inlet_flow": inlet_flow}
+    for param in params_rand.keys():
+        print(f"{param}: {params_rand[param]*0.8} - {params_rand[param]*1.2}")
+        params_rand[param] *= (1 - 0.2*np.random.default_rng(seed=None).random())
+    print(f"{U_in}: {U_in*0.8} - {U_in*1.2}")
+    return
+
+def print_aorta_ranges():
+    params_stat_dict = load_dict("data/param_stat_dict")["Aorta"]
+    inlet_radius = get_random(params_stat_dict["inlet_radius"])
+    outlet1_angle = get_random(params_stat_dict["angle"])*180/np.pi
+    outlet2_angle = get_random(params_stat_dict["angle"])*180/np.pi
+
+    for param in params_stat_dict.keys():
+        stats_list = params_stat_dict[param]
+        if param == "angle":
+            print(f"{param}: {(stats_list[0] + 0.4 * (stats_list[1]-stats_list[0]))*180/np.pi}\
+             - {(stats_list[0] + 0.6 * (stats_list[1]-stats_list[0]))*180/np.pi}")
+        else:
+            print(f"{param}: {(stats_list[0] + 0.4 * (stats_list[1]-stats_list[0]))}\
+             - {(stats_list[0] + 0.6 * (stats_list[1]-stats_list[0]))}")
+
+    return
 if __name__ == '__main__':
-    #write_junction_params_mynard()
-    #write_pipe_params_sweep_mesh()
-    #write_mynard_junction_params_sweep_outlet_radius()
-    #write_aorta_junction_params_sweep_mesh()
-    write_rout_sweep_junctions(anatomy = "Aorta_vary_rout", start = 0, num_junctions = 3)
-    write_anatomy_junctions(anatomy = "Aorta_rand", start = 0, num_junctions = 200)
-    #write_mynard_junctions_rand(num_junctions = 200)
+    # write_junction_params_mynard()
+    # write_pipe_params_sweep_mesh()
+    # write_mynard_junction_params_sweep_outlet_radius()
+    # write_aorta_junction_params_sweep_mesh()
+    # write_rout_sweep_junctions(anatomy = "Aorta_vary_rout", start = 0, num_junctions = 3)
+    # write_anatomy_junctions(anatomy = "Aorta_rand", start = 0, num_junctions = 200)
+    # write_mynard_junctions_rand(num_junctions = 200)
+    print_mynard_ranges()
+    print_aorta_ranges()

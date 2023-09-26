@@ -111,7 +111,7 @@ def vary_param(anatomy, variable, dP_type):
 
         if variable == "rout":
             plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = f"outlet radius = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} (cm)", c = colors[i], linewidth=2)
-            
+
             plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2 )
             #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2, label = f"unified0D_plus")
 
