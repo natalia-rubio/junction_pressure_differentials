@@ -8,14 +8,19 @@ def assemble_graphs(anatomy, unsteady = False):
     graph_list = []
 
     char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
-    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
+    if unsteady:
+        scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
+    else:
+        scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
 
     for i in range(int(len(char_val_dict["inlet_radius"])/2)):
 
         inlet_data = np.stack((scale(scaling_dict, np.asarray(char_val_dict["inlet_area"][2*i]), "inlet_area").reshape(1,-1),
+                                scale(scaling_dict, np.asarray(char_val_dict["inlet_length"][2*i]), "inlet_length").reshape(1,-1)
                                 )).T
 
         outlet_data = np.stack((scale(scaling_dict, np.asarray(char_val_dict["outlet_area"][2*i: 2*(i+1)]), "outlet_area"),
+                                scale(scaling_dict, np.asarray(char_val_dict["outlet_length"][2*i: 2*(i+1)]), "outlet_length"),
                                 scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i: 2*(i+1)]), "angle")
                                 )).T
 
@@ -44,7 +49,7 @@ def assemble_graphs(anatomy, unsteady = False):
 
             outlet_coefs = np.asarray([scale(scaling_dict, char_val_dict["coef_a"][2*i: 2*(i+1)], "coef_a"),
                                     scale(scaling_dict, char_val_dict["coef_b"][2*i: 2*(i+1)], "coef_b"),
-                                    scale(scaling_dict, char_val_dict["coef_b"][2*i: 2*(i+1)], "coef_L")]).T
+                                    scale(scaling_dict, char_val_dict["coef_L"][2*i: 2*(i+1)], "coef_L")]).T
 
 
         else:
@@ -61,7 +66,8 @@ def assemble_graphs(anatomy, unsteady = False):
 
 
         with tf.device("/cpu:0"):
-            graph.nodes["inlet"].data["inlet_features"] = tf.reshape(tf.convert_to_tensor(inlet_data, dtype=tf.float64), [1,1])
+            graph.nodes["inlet"].data["inlet_features"] = tf.reshape(tf.convert_to_tensor(inlet_data, dtype=tf.float64), [1,-1])
+            #graph.nodes["inlet"].data["inlet_features"] = tf.convert_to_tensor(inlet_data, dtype=tf.float64)
             graph.nodes["inlet"].data["inlet_length"] = tf.reshape(tf.convert_to_tensor(char_val_dict["inlet_length"][2*i], dtype=tf.float64), [1,1])
             graph.nodes["outlet"].data["outlet_features"] = tf.convert_to_tensor(outlet_data, dtype=tf.float64)
             graph.nodes["outlet"].data["outlet_flows"] = tf.convert_to_tensor(outlet_flows, dtype=tf.float64)
@@ -77,6 +83,8 @@ def assemble_graphs(anatomy, unsteady = False):
                 graph.nodes["outlet"].data["unsteady_outlet_dP"] = tf.convert_to_tensor(unsteady_outlet_dPs, dtype=tf.float32)
 
         graph_list.append(graph)
-
-    dgl.save_graphs(f"data/graph_lists/{anatomy}_graph_list_steady", graph_list)
+    if unsteady:
+        dgl.save_graphs(f"data/graph_lists/{anatomy}_graph_list", graph_list)
+    else:
+        dgl.save_graphs(f"data/graph_lists/{anatomy}_graph_list_steady", graph_list)
     return graph

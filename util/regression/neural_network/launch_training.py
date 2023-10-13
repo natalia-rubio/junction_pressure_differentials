@@ -42,16 +42,16 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
                    'latent_size_mlp': 20,
                    'out_size': 2,
                    'process_iterations': 1,
-                   'hl_mlp': 1,
-                   'num_inlet_ft' : 1,
-                   'num_outlet_ft': 2,
+                   'hl_mlp': 2,
+                   'num_inlet_ft' : 2,
+                   'num_outlet_ft': 3,
                    'unsteady': unsteady,
                    'output_name': "outlet_coefs"}
     if unsteady:
         network_params["out_size"] = 3
 
     train_params = {'learning_rate': 0.02,
-                    'lr_decay': 0.7,
+                    'lr_decay': 0.3,
                     'batch_size': int(np.ceil(len(train_dataset)/20)),
                     'nepochs': 200,
                     'weight_decay': 10**(-5),
@@ -75,5 +75,5 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
 if __name__ == "__main__":
 
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 102,  seed = 0, unsteady = True)
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 110,  seed = 0, unsteady = True)
     print(f"Train MSE: {train_mse}.  Val MSE {val_mse}.")

@@ -47,10 +47,13 @@ class GraphNet(tf.Module):
                                         params['hl_mlp'])
 
         self.params = params
-        self.scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
+        if unsteady:
+            self.scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
+        else:
+            self.scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
         print(params['out_size'])
         return
-        
+
     def get_model_list(self):
         model_list = [self.nn_model]
         return model_list

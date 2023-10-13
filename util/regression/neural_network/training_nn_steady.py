@@ -30,6 +30,8 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None, unstea
         #import pdb; pdb.set_trace()
         pred_outlet_output = gnn_model.forward(input_tensors[batch_ind])
         true_outlet_output = output_tensors[batch_ind]
+        # print(f"True Coefficients {true_outlet_output[:2, :]}")
+        # print(f"Predicted Coefficients {pred_outlet_output[:2, :]}")
         coef_loss_value = loss(pred_outlet_output, true_outlet_output)
         coef_loss = coef_loss + coef_loss_value.numpy()
 
@@ -177,7 +179,7 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
     plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_train_list), color = "royalblue", s=30, alpha = 0.6, marker='o', label="NN (Train)")
     plt.scatter(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list),  color = "orangered", s=30, alpha = 0.6, marker='d', label="NN (Val)")
     plt.plot(np.linspace(1, nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+cp_loss, "--", color = "peru", label="Constant Pressure (Val)")
-    #plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+quad_loss, "--",  color = "seagreen", label="True Quadratic Fit (Val)")
+    plt.plot(np.linspace(1,nepochs, nepochs, endpoint=True), np.asarray(mse_dP_val_list)*0+quad_loss, "--",  color = "seagreen", label="Optimal Coef Fit (Val)")
     plt.xlabel("epoch"); plt.ylabel("RMSE (mmHg)"); #plt.title(f"MSE Over Epochs"); plt.legend();
     plt.yscale("log")
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=1, mode="expand", borderaxespad=0.)
@@ -210,7 +212,6 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
                                                         output_name = network_params["output_name"],
                                                         validation_master_tensors = validation_master_tensors,
                                                         unsteady = unsteady)
-            import pdb; pdb.set_trace()
             if val_results['dP_loss'] < best:
                 best_ind = i
                 best = val_results['dP_loss']

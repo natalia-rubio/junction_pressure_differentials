@@ -7,17 +7,18 @@ from util.synthetic_data_processing.assemble_graphs import *
 from util.synthetic_data_processing.train_val_split import *
 
 anatomy = sys.argv[1];
-collect_synthetic_results(anatomy = anatomy, require4 = False, unsteady = True)
+unsteady = True
+collect_synthetic_results(anatomy = anatomy, require4 = False, unsteady = unsteady)
 print("Extracted simulation results.")
 
-get_coefs(anatomy = anatomy, rm_low_r2 = True, unsteady = True)
+get_coefs(anatomy = anatomy, rm_low_r2 = True, unsteady = unsteady)
 print("Fitted dP(Q) coefficients.")
 
-get_geo_scalings(anatomy, unsteady = True)
+get_geo_scalings(anatomy, unsteady = unsteady)
 print("Generated scaling dictionary.")
 
-assemble_graphs(anatomy, unsteady = True)
+assemble_graphs(anatomy, unsteady = unsteady)
 print("Assembled graphs.")
 
-generate_train_val_datasets(anatomy)
+generate_train_val_datasets(anatomy, unsteady = unsteady)
 print("Train and validation datasets ready.")

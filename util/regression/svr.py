@@ -6,8 +6,8 @@ from util.regression.neural_network.training_util import *
 def train_svr_model_steady(anatomy, num_geos, seed = 0):
 
     scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
-    train_dataset = load_dict(f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
-    val_dataset = load_dict(f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
+    train_dataset = load_dict(f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
+    val_dataset = load_dict(f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
 
     train_dataloader = get_graph_data_loader(train_dataset, batch_size = len(train_dataset))
     train_input, train_output, train_flow, train_flow_der, train_dP = get_master_tensors_steady(train_dataloader)
@@ -79,5 +79,4 @@ def train_svr_model_unsteady(anatomy, num_geos, seed = 0):
                 tf.reshape(inv_scale_tf(scaling_dict, pred_coefs_val[:,1], "coef_b"), (-1,1)) * val_flow + \
                 tf.reshape(inv_scale_tf(scaling_dict, pred_coefs_val[:,2], "coef_L"), (-1,1)) * (val_flow_der)
     dP_loss_val = rmse(pred_dP_val/1333, val_dP/1333)
-    import pdb; pdb.set_trace()
     return svr0, dP_loss_val, dP_loss_train

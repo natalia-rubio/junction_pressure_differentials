@@ -26,9 +26,12 @@ class DGL_Dataset(DGLDataset):
         return len(self.graphs)
 
 
-def generate_train_val_datasets(anatomy, dataset_params = {}):
+def generate_train_val_datasets(anatomy, dataset_params = {}, unsteady = True):
     seed = 0
-    graph_list = dgl.load_graphs(f"data/graph_lists/{anatomy}_graph_list_steady")[0]; graph_arr = np.array(graph_list, dtype = "object")
+    if unsteady:
+        graph_list = dgl.load_graphs(f"data/graph_lists/{anatomy}_graph_list")[0]; graph_arr = np.array(graph_list, dtype = "object")
+    else:
+        graph_list = dgl.load_graphs(f"data/graph_lists/{anatomy}_graph_list_steady")[0]; graph_arr = np.array(graph_list, dtype = "object")
     geo_list = [graph.nodes["inlet"].data["geo_name"][0] for graph in graph_list]
     geo_arr = np.asarray(geo_list)
     num_geos = len(geo_list); print(f"Number of geometries: {num_geos}")
@@ -51,12 +54,20 @@ def generate_train_val_datasets(anatomy, dataset_params = {}):
 
     if not os.path.exists(f"data/graph_lists/{anatomy}"):
         os.mkdir(f"data/graph_lists/{anatomy}")
-    save_dict(train_graph_list, f"data/graph_lists/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_graph_list")
-    save_dict(val_graph_list, f"data/graph_lists/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_graph_list")
+    if unsteady:
+        save_dict(train_graph_list, f"data/graph_lists/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_graph_list")
+        save_dict(val_graph_list, f"data/graph_lists/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_graph_list")
+    else:
+        save_dict(train_graph_list, f"data/graph_lists/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_graph_list_steady")
+        save_dict(val_graph_list, f"data/graph_lists/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_graph_list_steady")
 
     if not os.path.exists(f"data/dgl_datasets/{anatomy}"):
         os.mkdir(f"data/dgl_datasets/{anatomy}")
-    save_dict(train_dataset, f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
-    save_dict(val_dataset, f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
+    if unsteady:
+        save_dict(train_dataset, f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
+        save_dict(val_dataset, f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
+    else:
+        save_dict(train_dataset, f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
+        save_dict(val_dataset, f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
     print(f"total geos: {num_geos}")
     return train_dataset, val_dataset

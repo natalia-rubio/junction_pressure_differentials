@@ -26,14 +26,15 @@ def get_features_from_graph(graph, scaling_dict, time_ind):
     outlet_flows = graph.nodes["outlet"].data["unsteady_outlet_flows"].numpy()[:, time_ind]
 
     features = {"inlet_area": np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1), # add inlet area (once per junction)
-                "inlet_length": np.asarray(graph.nodes["inlet"].data["inlet_length"].numpy()[:,0]).reshape(1,-1), # add inlet area (once per junction)
+                "inlet_length": np.asarray(inv_scale(scaling_dict, inlet_data[:,1], "inlet_length")).reshape(1,-1), # add inlet area (once per junction)
                 "inlet_radius": np.sqrt(np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1)/np.pi), # add inlet area (once per junction)
                 "outlet_flow": np.asarray(outlet_flows).reshape(2,-1),
                 "inlet_flow": np.asarray(sum(outlet_flows)).reshape(1,-1),
                 "outlet_area": inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1), # add outlet area (once per junction)
                 "outlet_radius": np.sqrt(inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1)/np.pi), # add outlet area (once per junction)
+                "outlet_radius": inv_scale(scaling_dict, outlet_data[:,1], "outlet_length").reshape(2,-1), # add outlet area (once per junction)
                 "outlet_length": graph.nodes["outlet"].data["outlet_length"].numpy().reshape(2,-1), # add outlet area (once per junction)
-                "outlet_angle": inv_scale(scaling_dict, outlet_data[:,1], "angle").reshape(2,-1),
+                "outlet_angle": inv_scale(scaling_dict, outlet_data[:,2], "angle").reshape(2,-1),
                 "inlet_angle": np.asarray(0*outlet_data[:,1]).reshape(1,-1) # add outlet area (once per junction)
                 }
     features.update({"inlet_velocity": features["inlet_flow"].reshape(1,-1)/features["inlet_area"].reshape(1,-1)})
@@ -46,7 +47,7 @@ def graphs_to_junction_dict_steady_cont(graph_list, scaling_dict):
     junction_counter = 0 # count total number of junctions
 
     for graph in graph_list: # loop over all data points
-        base_junction = get_features_from_graph_steady(graph, scaling_dict)
+        base_junction = get_features_from_graph_steady_cont(graph, scaling_dict)
         num_time_steps = 100
         num_flows = graph.nodes["outlet"].data["outlet_flows"].numpy().shape[1]
         min_flow1 = graph.nodes["outlet"].data["outlet_flows"].numpy()[0][0]
@@ -92,14 +93,14 @@ def get_features_from_graph_steady(graph, scaling_dict, time_ind):
     outlet_flows = graph.nodes["outlet"].data["outlet_flows"].numpy()[:, time_ind]
 
     features = {"inlet_area": np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1), # add inlet area (once per junction)
-                "inlet_length": np.asarray(graph.nodes["inlet"].data["inlet_length"].numpy()[:,0]).reshape(1,-1), # add inlet area (once per junction)
+                "inlet_length": np.asarray(inv_scale(scaling_dict, inlet_data[:,1], "inlet_length")).reshape(1,-1), # add inlet area (once per junction)
                 "inlet_radius": np.sqrt(np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1)/np.pi), # add inlet area (once per junction)
                 "outlet_flow": np.asarray(outlet_flows).reshape(2,-1),
                 "inlet_flow": np.asarray(sum(outlet_flows)).reshape(1,-1),
                 "outlet_area": inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1), # add outlet area (once per junction)
                 "outlet_radius": np.sqrt(inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1)/np.pi), # add outlet area (once per junction)
-                "outlet_length": graph.nodes["outlet"].data["outlet_length"].numpy().reshape(2,-1), # add outlet area (once per junction)
-                "outlet_angle": inv_scale(scaling_dict, outlet_data[:,1], "angle").reshape(2,-1),
+                "outlet_length": inv_scale(scaling_dict, outlet_data[:,1], "outlet_length").reshape(2,-1), # add outlet area (once per junction)
+                "outlet_angle": inv_scale(scaling_dict, outlet_data[:,2], "angle").reshape(2,-1),
                 "inlet_angle": np.asarray(0*outlet_data[:,1]).reshape(1,-1) # add outlet area (once per junction)
                 }
     features.update({"inlet_velocity": features["inlet_flow"].reshape(1,-1)/features["inlet_area"].reshape(1,-1)})
@@ -121,14 +122,14 @@ def get_features_from_graph_steady_cont(graph, scaling_dict):
     #             "inlet_angle": np.asarray(0*outlet_data[:,1]).reshape(1,-1) # add outlet area (once per junction)
     #             }
     features = {"inlet_area": np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1), # add inlet area (once per junction)
-                "inlet_length": np.asarray(graph.nodes["inlet"].data["inlet_length"].numpy()[:,0]).reshape(1,-1), # add inlet area (once per junction)
+                "inlet_length": np.asarray(inv_scale(scaling_dict, inlet_data[:,1], "inlet_length")).reshape(1,-1), # add inlet area (once per junction)
                 "inlet_radius": np.sqrt(np.asarray(inv_scale(scaling_dict, inlet_data[:,0], "inlet_area")).reshape(1,-1)/np.pi), # add inlet area (once per junction)
                 "outlet_flow": np.asarray(outlet_flows).reshape(2,-1),
                 "inlet_flow": np.asarray(sum(outlet_flows)).reshape(1,-1),
                 "outlet_area": inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1), # add outlet area (once per junction)
                 "outlet_radius": np.sqrt(inv_scale(scaling_dict, outlet_data[:,0], "outlet_area").reshape(2,-1)/np.pi), # add outlet area (once per junction)
-                "outlet_length": graph.nodes["outlet"].data["outlet_length"].numpy().reshape(2,-1), # add outlet area (once per junction)
-                "outlet_angle": inv_scale(scaling_dict, outlet_data[:,1], "angle").reshape(2,-1),
+                "outlet_length": inv_scale(scaling_dict, outlet_data[:,1], "outlet_length").reshape(2,-1), # add outlet area (once per junction)
+                "outlet_angle": inv_scale(scaling_dict, outlet_data[:,2], "angle").reshape(2,-1),
                 "inlet_angle": np.asarray(0*outlet_data[:,1]).reshape(1,-1) # add outlet area (once per junction)
                 }
     features.update({"inlet_velocity": features["inlet_flow"].reshape(1,-1)/features["inlet_area"].reshape(1,-1)})

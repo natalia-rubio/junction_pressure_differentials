@@ -8,8 +8,8 @@ from util.regression.neural_network.training_util import *
 def train_gpr_model_steady(anatomy, num_geos, seed = 0):
 
     scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
-    train_dataset = load_dict(f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
-    val_dataset = load_dict(f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
+    train_dataset = load_dict(f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
+    val_dataset = load_dict(f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
 
     train_dataloader = get_graph_data_loader(train_dataset, batch_size = len(train_dataset))
     train_input, train_output, train_flow, train_flow_der, train_dP = get_master_tensors_steady(train_dataloader)
@@ -18,7 +18,7 @@ def train_gpr_model_steady(anatomy, num_geos, seed = 0):
     val_input, val_output, val_flow, val_flow_der, val_dP = get_master_tensors_steady(val_dataloader)
 
     kernel = RBF(length_scale=1.0, length_scale_bounds=(1e-1, 10.0))
-    gpr = GaussianProcessRegressor(kernel=kernel, random_state=0).fit(np.asarray(train_input), np.asarray(train_output))
+    gpr = GaussianProcessRegressor(kernel=kernel, random_state=0, alpha = 10**(-2)).fit(np.asarray(train_input), np.asarray(train_output))
     pickle.dump(gpr, open(f"results/models/{len(train_dataset)+len(val_dataset)}_gpr", 'wb'))
 
 

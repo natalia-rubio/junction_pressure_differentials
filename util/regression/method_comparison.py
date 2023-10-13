@@ -4,7 +4,7 @@ from lin_reg import *
 from svr import *
 from gpr import *
 
-anatomy = "Aorta_rand"; num_geos_steady = 110; num_geos_unsteady = 102
+anatomy = "Aorta_rand"; num_geos_steady = 110; num_geos_unsteady = 110
 
 print ("{:<8} {:<10} {:<10} {:<10} {:<10}".format('Model','Steady (Train)','Steady (Val)','Unsteady (Train)', 'Unsteady (Val)'))
 
