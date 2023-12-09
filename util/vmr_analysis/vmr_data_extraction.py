@@ -9,7 +9,7 @@ def print_stats(char_val_dict, anatomy, value):
     dat = np.asarray(char_val_dict[anatomy][value])
     print(f"{anatomy} {value} statistics:")
 
-    print(f"Min: {np.min(dat)}.  Max {np.max(dat)}.")
+    print(f"Min: {np.min(dat)}.  Max {np.max(dat)}.  Med {np.median(dat)}")
     print(f"Mean: {np.mean(dat)}.  Standard Deviation {np.std(dat)}.")
     print("---------------------------------------------------------")
     return
@@ -111,6 +111,12 @@ def print_aorta_study():
     param_stat_dict = {}
 
     for anatomy in char_val_dict.keys():
+
+        if anatomy == "Pulmonary":
+            low_rad_ind = np.asarray(char_val_dict[anatomy]["inlet_radius"]) < 0.7
+            for value in char_val_dict[anatomy].keys():
+                char_val_dict[anatomy][value] = list(np.asarray(char_val_dict[anatomy][value])[low_rad_ind])
+
         char_val_dict[anatomy].update({"velocity": np.asarray(char_val_dict[anatomy]["flow"])/ (np.pi*np.square(char_val_dict[anatomy]["radius"]))})
         char_val_dict[anatomy].update({"inlet_velocity": np.asarray(char_val_dict[anatomy]["inlet_flow"])/ (np.pi*np.square(char_val_dict[anatomy]["inlet_radius"]))})
         char_val_dict[anatomy].update({"radius_ratio": np.asarray(char_val_dict[anatomy]["radius"])/ np.asarray(char_val_dict[anatomy]["inlet_radius"])})
@@ -126,11 +132,55 @@ def print_aorta_study():
                                             np.mean(dat),
                                             np.std(dat)]})
 
-    print(param_stat_dict)
+    #pprint(param_stat_dict)
     params_stat_dir = "data/param_stat_dict"
     save_dict(param_stat_dict, params_stat_dir)
-
     return
+
+def print_pulmo_study():
+
+    anatomy = "Pulmonary"
+    char_val_dict = load_dict("data/characteristic_value_dictionaries/vmr_char_val_dict")
+    param_stat_dict = {}
+
+    char_val_dict[anatomy].update({"velocity": np.asarray(char_val_dict[anatomy]["flow"])/ (np.pi*np.square(char_val_dict[anatomy]["radius"]))})
+    char_val_dict[anatomy].update({"inlet_velocity": np.asarray(char_val_dict[anatomy]["inlet_flow"])/ (np.pi*np.square(char_val_dict[anatomy]["inlet_radius"]))})
+    char_val_dict[anatomy].update({"radius_ratio": np.asarray(char_val_dict[anatomy]["radius"])/ np.asarray(char_val_dict[anatomy]["inlet_radius"])})
+    value_list = ["flow", "angle", "inlet_radius", "velocity", "radius_ratio", "inlet_velocity"]
+
+    plt.hist(char_val_dict[anatomy]["inlet_radius"])
+    plt.xlabel("inlet radius (cm)")
+    plt.ylabel("frequency")
+    plt.savefig("results/vmr/pulmonary_inlet_ratios.png")
+    return
+
+# def print_pulmo_study():
+#
+#     anatomy = "Pulmonary"
+#     char_val_dict = load_dict("data/characteristic_value_dictionaries/vmr_char_val_dict")
+#     param_stat_dict = {}
+#
+#     for anatomy in char_val_dict.keys():
+#         char_val_dict[anatomy].update({"velocity": np.asarray(char_val_dict[anatomy]["flow"])/ (np.pi*np.square(char_val_dict[anatomy]["radius"]))})
+#         char_val_dict[anatomy].update({"inlet_velocity": np.asarray(char_val_dict[anatomy]["inlet_flow"])/ (np.pi*np.square(char_val_dict[anatomy]["inlet_radius"]))})
+#         char_val_dict[anatomy].update({"radius_ratio": np.asarray(char_val_dict[anatomy]["radius"])/ np.asarray(char_val_dict[anatomy]["inlet_radius"])})
+#         value_list = ["flow", "angle", "inlet_radius", "velocity", "radius_ratio", "inlet_velocity"]
+#
+#         param_stat_dict.update({anatomy:{}})
+#
+#         for value in value_list:
+#             dat = np.asarray(char_val_dict[anatomy][value])
+#             print_stats(char_val_dict, anatomy, value)
+#             param_stat_dict[anatomy].update({value: [np.min(dat),
+#                                             np.max(dat),
+#                                             np.mean(dat),
+#                                             np.std(dat)]})
+#
+#     print(param_stat_dict)
+#     params_stat_dir = "data/param_stat_dict"
+#     save_dict(param_stat_dict, params_stat_dir)
+
 if __name__ == '__main__':
-    extract_characteristic_values()
+    #extract_characteristic_values()
     print_aorta_study()
+    #print_pulmo_study()

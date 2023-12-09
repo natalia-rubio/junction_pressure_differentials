@@ -1,0 +1,2 @@
+inference_performance,timestamp,done,training_iteration,trial_id,date,time_this_iter_s,time_total_s,pid,hostname,node_ip,time_since_restore,iterations_since_restore,checkpoint_dir_name
+2.051114666706323,1697860916,False,1,94f66efc,2023-10-20_21-01-56,21.4111270904541,21.4111270904541,12710,marsdengpu,171.65.93.126,21.4111270904541,1,

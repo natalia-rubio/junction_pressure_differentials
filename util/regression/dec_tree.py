@@ -3,11 +3,11 @@ sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.regression.neural_network.training_util import *
 from sklearn.tree import DecisionTreeRegressor
 
-def train_dt_model_steady(anatomy, num_geos, seed = 0):
+def train_dt_model_steady(anatomy, num_geos, seed = 0, hyperparams = {}):
 
-    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
-    train_dataset = load_dict(f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
-    val_dataset = load_dict(f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
+    scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
+    train_dataset = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
+    val_dataset = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset_steady")
 
     train_dataloader = get_graph_data_loader(train_dataset, batch_size = len(train_dataset))
     train_input, train_output, train_flow, train_flow_der, train_dP = get_master_tensors_steady(train_dataloader)
@@ -15,8 +15,8 @@ def train_dt_model_steady(anatomy, num_geos, seed = 0):
     val_dataloader = get_graph_data_loader(val_dataset, batch_size = len(train_dataset))
     val_input, val_output, val_flow, val_flow_der, val_dP = get_master_tensors_steady(val_dataloader)
 
-    dt = DecisionTreeRegressor(random_state=0, max_depth=5).fit(np.asarray(train_input), np.asarray(train_output))
-    pickle.dump(dt, open(f"results/models/{len(train_dataset)+len(val_dataset)}_dt", 'wb'))
+    dt = DecisionTreeRegressor(random_state=0, max_depth=hyperparams["max_depth"], min_samples_leaf =hyperparams["min_samples_leaf"] ).fit(np.asarray(train_input), np.asarray(train_output))
+    pickle.dump(dt, open(f"/home/nrubio/Desktop/junction_pressure_differentials/results/models/{len(train_dataset)+len(val_dataset)}_dt", 'wb'))
 
 
     pred_coefs_train = tf.convert_to_tensor(dt.predict(np.asarray(train_input)), dtype =tf.float64)
@@ -32,11 +32,11 @@ def train_dt_model_steady(anatomy, num_geos, seed = 0):
     return dt, dP_loss_val, dP_loss_train
 
 
-def train_dt_model_unsteady(anatomy, num_geos, seed = 0):
+def train_dt_model_unsteady(anatomy, num_geos, seed = 0, hyperparams = {}):
 
-    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
-    train_dataset = load_dict(f"data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
-    val_dataset = load_dict(f"data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
+    scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_scaling_dict")
+    train_dataset = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
+    val_dataset = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset")
 
     train_dataloader = get_graph_data_loader(train_dataset, batch_size = len(train_dataset))
     train_input, train_output, train_flow, train_flow_der, train_dP = get_master_tensors_unsteady(train_dataloader)
@@ -45,8 +45,8 @@ def train_dt_model_unsteady(anatomy, num_geos, seed = 0):
     val_input, val_output, val_flow, val_flow_der, val_dP = get_master_tensors_unsteady(val_dataloader)
 
 
-    dt = DecisionTreeRegressor(random_state=0).fit(np.asarray(train_input), np.asarray(train_output))
-    pickle.dump(dt, open(f"results/models/{len(train_dataset)+len(val_dataset)}_dt", 'wb'))
+    dt = DecisionTreeRegressor(random_state=0, max_depth=hyperparams["max_depth"], min_samples_leaf =hyperparams["min_samples_leaf"] ).fit(np.asarray(train_input), np.asarray(train_output))
+    pickle.dump(dt, open(f"/home/nrubio/Desktop/junction_pressure_differentials/results/models/{len(train_dataset)+len(val_dataset)}_dt", 'wb'))
 
     pred_coefs_train = tf.convert_to_tensor(dt.predict(np.asarray(train_input)), dtype =tf.float64)
     pred_dP_train = tf.reshape(inv_scale_tf(scaling_dict, pred_coefs_train[:,0], "coef_a"), (-1,1)) * tf.square(train_flow) + \

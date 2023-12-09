@@ -15,12 +15,14 @@ def dP_poiseuille(flow, radius, length):
     dP = 8 * mu * length * flow /(np.pi * radius**4)
     return dP
 
-def plot_unsteady(anatomy):
+def plot_unsteady(anatomy, geo_num):
 
-    model_name = f"1_hl_20_lsmlp_0_02_lr_0_7_lrd_1e-05_wd_bs_5_nepochs_200_seed_0_geos_102"
+    #model_name = f"1_hl_20_lsmlp_0_02_lr_0_7_lrd_1e-05_wd_bs_5_nepochs_200_seed_0_geos_102"
+    model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_1000_seed_0_geos_110"
     nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name, compile=True)
-    graph_list = load_dict(f"data/graph_lists/{anatomy}/val_Aorta_rand_num_geos_102_seed_0_graph_list")
-    graph = graph_list[19]
+    # graph_list = load_dict(f"data/graph_lists/{anatomy}/val_Aorta_rand_num_geos_102_seed_0_graph_list")
+    graph_list = load_dict(f"data/graph_lists/{anatomy}/val_Aorta_rand_num_geos_110_seed_0_graph_list")
+    graph = graph_list[geo_num]
     scaling_dict = load_dict("data/scaling_dictionaries/Aorta_rand_scaling_dict")
 
     master_tensor = get_master_tensors_unsteady([graph])
@@ -58,15 +60,16 @@ def plot_unsteady(anatomy):
     plt.clf()
     plt.plot(np.asarray(flow_tensor), np.asarray(tf.reshape(pred_dP[0,:], [-1,]))/1333, label = 'RRI (NN)', c = "royalblue", linewidth=2)
     plt.plot(np.asarray(flow_tensor), np.asarray(tf.reshape(pred_dP_steady[0,:], [-1,]))/1333, label = 'RR (NN)', c = "seagreen", linewidth=2)
-    plt.plot(np.asarray(flow_tensor), dP_mynard, label = 'Unified0D+', c = "salmon", linewidth=2, linestyle ="--")
+    # plt.plot(np.asarray(flow_tensor), dP_mynard, label = 'Unified0D+', c = "salmon", linewidth=2, linestyle ="--")
     plt.scatter(np.asarray(flow_tensor), np.asarray(dP_tensor)/1333, label = "Simulation", c = "peru", marker = "*", s = 100)
 
     plt.xlabel("$Q \;  (\mathrm{cm^3/s})$")
     plt.ylabel("$\Delta P$ (mmHg)")
     plt.legend(fontsize="14")
-    plt.savefig(f"results/model_visualization/unsteady_flow_vs_predicted_dps.pdf", bbox_inches='tight', transparent=True, format = "pdf")
-    import pdb; pdb.set_trace()
+    plt.savefig(f"results/model_visualization/unsteady_flow_vs_predicted_dps{geo_num}.pdf", bbox_inches='tight', transparent=True, format = "pdf")
+    #import pdb; pdb.set_trace()
 
     return
 
-plot_unsteady(anatomy = "Aorta_rand")
+geo_num = int(sys.argv[1])
+plot_unsteady(anatomy = "Aorta_rand", geo_num = geo_num)

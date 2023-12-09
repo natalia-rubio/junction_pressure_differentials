@@ -426,5 +426,5 @@ if __name__ == '__main__':
     # write_rout_sweep_junctions(anatomy = "Aorta_vary_rout", start = 0, num_junctions = 3)
     # write_anatomy_junctions(anatomy = "Aorta_rand", start = 0, num_junctions = 200)
     # write_mynard_junctions_rand(num_junctions = 200)
-    print_mynard_ranges()
+    #print_mynard_ranges()
     print_aorta_ranges()

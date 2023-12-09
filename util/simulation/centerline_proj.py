@@ -131,27 +131,34 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True):
 
     inlet_locs = (points[inlet_pts])[np.argsort(pt_id[inlet_pts])]
     inlet_length = get_length(inlet_locs[offset:])
-    p_inlet = (soln_array["pressure_02000"][inlet_pts])[np.argsort(pt_id[inlet_pts])]
-    p_end_inlet = p_inlet[offset]
-    q_inlet = (soln_array["velocity_02000"][inlet_pts])[np.argsort(pt_id[inlet_pts])][offset]
     area_inlet = (soln_array["area"][inlet_pts])[np.argsort(pt_id[inlet_pts])][offset]
+    q_inlet = (soln_array["velocity_01000"][inlet_pts])[np.argsort(pt_id[inlet_pts])][offset]
+    p_inlet = (soln_array["pressure_01000"][inlet_pts])[np.argsort(pt_id[inlet_pts])] + 0.5*1.06*np.square(q_inlet/area_inlet)
+    p_end_inlet = p_inlet[offset]
+
     inlet_inds = np.linspace(0, len(p_inlet), len(p_inlet))
     print(f"Inlet Pressure Difference: {np.max(p_inlet) - np.min(p_inlet)}")
 
     outlet1_locs = (points[outlet1_pts])[np.argsort(pt_id[outlet1_pts])]
     outlet1_length = get_length(outlet1_locs[:-offset])
-    p_outlet1 = (soln_array["pressure_02000"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])]
-    p_end_outlet1 = p_outlet1[-offset]
-    q_outlet1 = (soln_array["velocity_02000"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])][-offset]
+
     area_outlet1 = (soln_array["area"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])][-offset]
+    q_outlet1 = (soln_array["velocity_01000"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])][-offset]
+    p_outlet1 = (soln_array["pressure_01000"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])] + 0.5*1.06*np.square(q_outlet1/area_outlet1)
+    p_end_outlet1 = p_outlet1[-offset]
+    print("Inlet flow")
+    print(q_inlet)
+
     outlet1_inds = np.linspace(len(p_inlet), len(p_inlet)+len(p_outlet1), len(p_outlet1))
 
     outlet2_locs = (points[outlet2_pts])[np.argsort(pt_id[outlet2_pts])]
     outlet2_length = get_length(outlet2_locs[:-offset])
-    p_outlet2 = (soln_array["pressure_02000"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])]
-    p_end_outlet2 = p_outlet2[-offset]
-    q_outlet2 = (soln_array["velocity_02000"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])][-offset]
+
+
     area_outlet2 = (soln_array["area"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])][-offset]
+    q_outlet2 = (soln_array["velocity_01000"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])][-offset]
+    p_outlet2 = (soln_array["pressure_01000"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])] + 0.5*1.06*np.square(q_outlet2/area_outlet2)
+    p_end_outlet2 = p_outlet2[-offset]
     outlet2_inds = np.linspace(len(p_inlet), len(p_inlet)+len(p_outlet2), len(p_outlet2))
 
     reg_in = LinearRegression().fit(inlet_inds[2*offset: -offset].reshape(-1, 1), p_inlet[2*offset: -offset].reshape(-1, 1))
@@ -182,6 +189,42 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True):
         plt.legend(fontsize="14")
         plt.savefig(f"{fpath_1dsol[0:-25]}/centerline_pressure_{fpath_1dsol[-5]}_extrap.pdf", bbox_inches='tight', format = "pdf")
 
+
+    if plot_pressure:
+
+        inlet_1d_incs = np.linalg.norm(inlet_locs[1:,:] - inlet_locs[0:-1, :], axis = 1)
+        inlet_1d_locs = [0]
+        for i in range(int(inlet_1d_incs.size)):
+            inlet_1d_locs.append(inlet_1d_locs[i] + inlet_1d_incs[i])
+        inlet_1d_locs = np.asarray(inlet_1d_locs)
+
+        outlet1_1d_incs = np.linalg.norm(outlet1_locs[1:,:] - outlet1_locs[0:-1, :], axis = 1)
+        outlet1_1d_locs = [inlet_1d_locs[-1]]
+        for i in range(int(outlet1_1d_incs.size)):
+            outlet1_1d_locs.append(outlet1_1d_locs[i] + outlet1_1d_incs[i])
+        outlet1_1d_locs = np.asarray(outlet1_1d_locs)
+
+        outlet2_1d_incs = np.linalg.norm(outlet2_locs[1:,:] - outlet2_locs[0:-1, :], axis = 1)
+        outlet2_1d_locs = [inlet_1d_locs[-1]]
+        for i in range(int(outlet2_1d_incs.size)):
+            outlet2_1d_locs.append(outlet2_1d_locs[i] + outlet2_1d_incs[i])
+        outlet2_1d_locs = np.asarray(outlet2_1d_locs)
+
+        plt.clf()
+        plt.plot(inlet_1d_locs, p_inlet/1333, label = "Inlet", linewidth = 2, c = colors[0])
+        #plt.plot(inlet_inds, p_inlet_pred/1333, linewidth = 2, linestyle = "--", c = colors[0])
+        plt.scatter(np.asarray([inlet_1d_locs[offset],]), np.asarray([p_inlet[offset]/1333,]), marker = "o", c = colors[0])
+        plt.plot(outlet1_1d_locs, p_outlet1/1333, label = "Outlet 1", linewidth = 2, c = colors[1])
+        #plt.plot(outlet1_inds, p_outlet1_pred/1333, linewidth = 2, linestyle = "--", c = colors[1])
+        plt.scatter(np.asarray(outlet1_1d_locs[-offset]), np.asarray(p_outlet1[-offset]/1333), marker = "o", c = colors[1])
+        plt.plot(outlet2_1d_locs, p_outlet2/1333, label = "Outlet 2", linewidth = 2, c = colors[2])
+        #plt.plot(outlet2_inds, p_outlet2_pred/1333, linewidth = 2, linestyle = "--", c = colors[2])
+        plt.scatter(np.asarray(outlet2_1d_locs[-offset]), np.asarray(p_outlet2[-offset]/1333), marker = "o", c = colors[2])
+        plt.xlabel("Centerline Distance (cm)")
+        plt.ylabel("Total Average Pressure (mmHg)")
+        plt.legend(fontsize="14")
+        plt.savefig(f"{fpath_1dsol[0:-25]}/centerline_pressure_{fpath_1dsol[-5]}_total.pdf", bbox_inches='tight', format = "pdf")
+
     print(f"AREA || inlet: {area_inlet}.  outlet_1: {area_outlet1}. outlet_2: {area_outlet2}")
     print(f"FLOW || inlet: {q_inlet}.  outlet_1: {q_outlet1}. outlet_2: {q_outlet2}")
     #print(f"PRESSURE || inlet: {p_inlet}.  outlet_1: {p_outlet1}. outlet_2: {p_outlet2}")
@@ -207,19 +250,19 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True):
     save_dict(soln_dict, f"data/synthetic_junctions_reduced_results/{anatomy}/{geometry}/flow_{flow}_red_sol")
     return
 
-anatomies = ["mynard_vary_mesh_red_ts"]
+anatomies = ["Aorta_vary_rout"]#["mynard_vary_mesh_red_ts", "Aorta_vary_rout"]
 
 for anatomy in anatomies:
     geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}")
     for geometry in geos:
-        for flow in ["1", "3"]:
+        for flow in ["1",]:
 
             fpath_1d = f"data/synthetic_junctions/{anatomy}/{geometry}/centerlines/centerline.vtp"
             fpath_3d = f"data/synthetic_junctions/{anatomy}/{geometry}/flow_{flow}/solution_flow_{flow}.vtu"
             fpath_out = f"data/synthetic_junctions_reduced_results/{anatomy}/{geometry}/1dsol_flow_solution_{flow}.vtp"
 
             #extract_results(fpath_1d, fpath_3d, fpath_out, only_caps=False)
-            try:
-                plot_vars(anatomy, geometry, flow)
-            except:
-                continue
+            #try:
+            plot_vars(anatomy, geometry, flow)
+            # except:
+            #     continue

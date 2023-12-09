@@ -10,6 +10,13 @@ import tensorflow as tf
 import dgl
 from dgl.data import DGLDataset
 
+def get_re(flow, radius):
+    u = flow/(np.pi * radius**2)
+    d = 2*radius
+    rho = 1.06
+    mu = 0.04
+    return rho*u*d/mu
+
 def dP_poiseuille(flow, radius, length):
     mu = 0.04
     dP = 8 * mu * length * flow /(np.pi * radius**4)
@@ -17,21 +24,22 @@ def dP_poiseuille(flow, radius, length):
 
 def vary_param(anatomy, variable, dP_type):
     plt.clf()
-    #model_name = "1_hl_20_lsmlp_0_02_lr_0_7_lrd_1e-05_wd_bs_8_nepochs_200_seed_0_geos_187"#mynard
-    model_name = "1_hl_20_lsmlp_0_02_lr_0_7_lrd_1e-05_wd_bs_5_nepochs_200_seed_0_geos_110"#aorta
+    #model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_500_seed_0_geos_187"#mynard
+    model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_1000_seed_0_geos_110"#aorta
     nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name, compile=True)
 
     #junction_params = load_dict(f"/home/nrubio/Desktop/synthetic_junctions/Aorta_vary_r2/{geo}/junction_params_dict")
     char_val_dict = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout_synthetic_data_dict")
+    #char_val_dict = load_dict(f"data/characteristic_value_dictionaries/mynard_vary_rout_synthetic_data_dict")
     #char_val_dict0 = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout/synthetic_data_dict_steady")
     #print(char_val_dict)
     #scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
     scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_rand_scaling_dict_steady")
-    print(scaling_dict)
+    #print(scaling_dict)
     #scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_u_40-60_over3_scaling_dict_steady")
     dPs = []
     print(char_val_dict)
-    for i in range(int(len(char_val_dict["name"])/2)):
+    for i in reversed(range(int(len(char_val_dict["name"])/2))):
 
         if i/int(len(char_val_dict["name"])/2) < 0.5:
             outlet_ind = 1
@@ -80,7 +88,7 @@ def vary_param(anatomy, variable, dP_type):
                 graph.nodes["outlet"].data["outlet_dP"] = tf.convert_to_tensor(outlet_junction_dPs, dtype=tf.float64)
             graph.nodes["inlet"].data["geo_name"] = tf.constant([geo_name])
             graph.nodes["outlet"].data["outlet_coefs"] = tf.convert_to_tensor(outlet_coefs, dtype=tf.float64)
-        print(graph.nodes["outlet"].data)
+        #print(graph.nodes["outlet"].data)
 
         master_tensor = get_master_tensors_steady([graph])
         input_tensor = master_tensor[0]
@@ -102,9 +110,11 @@ def vary_param(anatomy, variable, dP_type):
 
         flow_arr = flow_tensor.numpy()
         dP_mynard_list = []
+        #print(char_val_dict["outlet_radius"])
         if dP_type == "end":
             for j in range(1,100):
                     dP_mynard_list = dP_mynard_list + [apply_unified0D_plus(junction_dict_global[j])[outlet_ind] \
+                                    + 0.00035*get_re(flow = flow_tensor_cont[j], radius = char_val_dict["outlet_radius"][2*i+outlet_ind])
                                     - dP_poiseuille(flow = inflow_tensor_cont[j], radius = char_val_dict["inlet_radius"][2*i], length = char_val_dict["inlet_length"][2*i]) \
                                     - dP_poiseuille(flow = flow_tensor_cont[j], radius = char_val_dict["outlet_radius"][2*i+outlet_ind], length = char_val_dict["outlet_length"][2*i+outlet_ind])]
         elif dP_type == "junction":
@@ -113,9 +123,9 @@ def vary_param(anatomy, variable, dP_type):
         dP_mynard = np.asarray(dP_mynard_list)
 
         if variable == "rout":
-            plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = f"outlet radius = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} (cm)", c = colors[i], linewidth=2)
+            plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = f"outlet radius = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} (cm)", c = colors[i+1], linewidth=2)
 
-            plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=4 )
+            plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i+1], linewidth=2 )
             #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2, label = f"unified0D_plus")
 
         if variable == "angle":
@@ -125,7 +135,7 @@ def vary_param(anatomy, variable, dP_type):
         # U_out = np.asarray(flow_tensor)[outlet_ind,1:]
         # K = -(np.asarray(dP)[outlet_ind,1:] - (0.5*1.06*(U_in**2 - U_out**2)))/ (0.5* 1.06 * U_in**2)
 
-        plt.scatter(np.asarray(flow_tensor)[outlet_ind,:], np.asarray(dP)[outlet_ind,:]/1333, c = colors[i], marker = "*", s = 100)
+        plt.scatter(np.asarray(flow_tensor)[outlet_ind,:], np.asarray(dP)[outlet_ind,:]/1333, c = colors[i+1], marker = "*", s = 100)
         #plt.scatter(np.asarray(flow_tensor)[outlet_ind,1:], K, c = colors[i], marker = "*", s = 100)
 
     plt.xlabel("$Q \;  (\mathrm{cm^3/s})$")

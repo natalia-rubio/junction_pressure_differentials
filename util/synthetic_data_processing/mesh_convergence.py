@@ -32,8 +32,8 @@ def vary_param(anatomy, variable):
     marker_list = ["o", "v", "s", "d", "X", "*"]
     #ref_list = ["6.1E5 elements","3.3E5 elements","1.7E5 elements", "9.9E5 elements"]
     #ref_list = ["1.3E5 cells", "1.6E5 cells", "3.5E5 cells", "6.9E5 cells", "1.5E6 cells", "1.9E6 cells"]# ["1", "2", "3", "4", "5"]
-    ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
-    #ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
+    #ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
+    ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
     re_max = 0
 
     for i in range(int(len(char_val_dict["name"])/2)):
@@ -42,13 +42,13 @@ def vary_param(anatomy, variable):
             outlet_ind = 1
         else:
             outlet_ind = 1
-        print(outlet_ind)
+        #print(outlet_ind)
 
         if i/int(len(char_val_dict["name"])/2) < 0.5:
             outlet_ind = 1
         else:
             outlet_ind = 0
-        print(outlet_ind)
+        #print(outlet_ind)
 
         inlet_data = np.stack((scale(scaling_dict, char_val_dict["inlet_area"][2*i], "inlet_area").reshape(1,-1),
                                 )).T
@@ -89,12 +89,12 @@ def vary_param(anatomy, variable):
                 graph.nodes["outlet"].data["outlet_dP"] = tf.convert_to_tensor(outlet_junction_dPs, dtype=tf.float32)
             graph.nodes["inlet"].data["geo_name"] = tf.constant([geo_name])
             graph.nodes["outlet"].data["outlet_coefs"] = tf.convert_to_tensor(outlet_coefs, dtype=tf.float32)
-        print(graph.nodes["outlet"].data)
+        #print(graph.nodes["outlet"].data)
 
         master_tensor = get_master_tensors_steady([graph])
         input_tensor = master_tensor[0]
         flow_tensor = master_tensor[2]
-        dP = master_tensor[3]
+        dP = master_tensor[4]
 
 
         plt.scatter(np.asarray(flow_tensor)[0,:], np.asarray(dP)[outlet_ind,:]/1333, facecolors='none', edgecolors = color, marker = marker_list[i], s = 100, label = f"{ref_list[i]} mesh elements")
@@ -105,19 +105,19 @@ def vary_param(anatomy, variable):
                         + tf.linspace(flow_tensor[1,0], flow_tensor[1,-1], 100)
 
 
-    junction_dict_global = graphs_to_junction_dict_steady([graph], scaling_dict)
-    flow_arr = flow_tensor.numpy()
-    dP_mynard_list = []
-    if dP_type == "end":
-        for j in range(1,100):
-                dP_mynard_list = dP_mynard_list + [apply_unified0D_plus(junction_dict_global[j])[outlet_ind] \
-                                - dP_poiseuille(flow = inflow_tensor_cont[j], radius = char_val_dict["inlet_radius"][2*i], length = char_val_dict["inlet_length"][2*i]) \
-                                - dP_poiseuille(flow = flow_tensor_cont[j], radius = char_val_dict["outlet_radius"][2*i+outlet_ind], length = char_val_dict["outlet_length"][2*i+outlet_ind])]
-    elif dP_type == "junction":
-        for j in range(1,100):
-                dP_mynard_list = dP_mynard_list + [apply_unified0D_plus(junction_dict_global[j])[outlet_ind]]
-    dP_mynard = np.asarray(dP_mynard_list)
-    plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", linewidth=2, color = color, label = "Unified0D+")
+    # junction_dict_global = graphs_to_junction_dict_steady([graph], scaling_dict)
+    # flow_arr = flow_tensor.numpy()
+    # dP_mynard_list = []
+    # if dP_type == "end":
+    #     for j in range(1,100):
+    #             dP_mynard_list = dP_mynard_list + [apply_unified0D_plus(junction_dict_global[j])[outlet_ind] \
+    #                             - dP_poiseuille(flow = inflow_tensor_cont[j], radius = char_val_dict["inlet_radius"][2*i], length = char_val_dict["inlet_length"][2*i]) \
+    #                             - dP_poiseuille(flow = flow_tensor_cont[j], radius = char_val_dict["outlet_radius"][2*i+outlet_ind], length = char_val_dict["outlet_length"][2*i+outlet_ind])]
+    # elif dP_type == "junction":
+    #     for j in range(1,100):
+    #             dP_mynard_list = dP_mynard_list + [apply_unified0D_plus(junction_dict_global[j])[outlet_ind]]
+    # dP_mynard = np.asarray(dP_mynard_list)
+    #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", linewidth=2, color = color, label = "Unified0D+")
 
     plt.xlabel("$Q \;  (\mathrm{cm^3/s})$" + f"    (Max Re {int(re_max)})")
     plt.ylabel("$\Delta P$ (mmHg)")
@@ -125,5 +125,5 @@ def vary_param(anatomy, variable):
     plt.savefig(f"results/mesh_convergence/mesh_refinement_study_{anatomy}.pdf", bbox_inches='tight', format = "pdf")
     return
 
-vary_param("mynard_vary_mesh", "rout")
+vary_param("Aorta_vary_mesh", "rout")
 #vary_param("Aorta_vary_angle", "angle")

@@ -324,6 +324,14 @@ def get_aorta_junction_segmentation(geo_params):
 
     return inlet_segmentations_polydata_objects, u_segmentations_polydata_objects
 
+def get_aorta_pulmo_segmentation(geo_params):
+    inlet_path, inlet_segmentations = get_aorta_inlet_segmentations(geo_params)
+    inlet_segmentations_polydata_objects = [contour.get_polydata() for contour in inlet_segmentations]
+
+    u_path, u_segmentations = get_aorta_u_segmentations(geo_params)
+    u_segmentations_polydata_objects = [contour.get_polydata() for contour in u_segmentations]
+
+    return inlet_segmentations_polydata_objects, u_segmentations_polydata_objects
 
 def get_pipe_segmentation(geo_params):
 

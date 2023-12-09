@@ -7,7 +7,7 @@ from util.synthetic_data_processing.assemble_graphs import *
 from util.synthetic_data_processing.train_val_split import *
 
 anatomy = sys.argv[1];
-unsteady = True
+unsteady = False
 collect_synthetic_results(anatomy = anatomy, require4 = False, unsteady = unsteady)
 print("Extracted simulation results.")
 

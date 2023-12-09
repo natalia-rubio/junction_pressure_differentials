@@ -1,0 +1,37 @@
+Failure # 1 (occurred at 2023-12-01_10-47-46)
+[36mray::ImplicitFunc.train()[39m (pid=31979, ip=171.65.93.126, actor_id=56ac2188ab1ab77b7f3bd57501000000, repr=objective)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/trainable.py", line 400, in train
+    raise skipped from exception_cause(skipped)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/air/_internal/util.py", line 91, in run
+    self._ret = self._target(*self._args, **self._kwargs)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/function_trainable.py", line 383, in <lambda>
+    training_func=lambda: self._trainable_func(self.config),
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/function_trainable.py", line 822, in _trainable_func
+    output = fn()
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/method_tuning.py", line 30, in objective
+    reg_steady, dP_loss_val_steady, dP_loss_train_steady = train_dt_model_steady(anatomy, num_geos_steady, seed = 0, hyperparams = config)
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/dec_tree.py", line 12, in train_dt_model_steady
+    train_dataloader = get_graph_data_loader(train_dataset, batch_size = len(train_dataset))
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/neural_network/training_util.py", line 90, in get_graph_data_loader
+    graph_data_loader.append(dgl.batch([dataset[ind].to("/gpu:0") for ind in batch_indices]))
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/neural_network/training_util.py", line 90, in <listcomp>
+    graph_data_loader.append(dgl.batch([dataset[ind].to("/gpu:0") for ind in batch_indices]))
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/heterograph.py", line 5429, in to
+    ret._graph = self._graph.copy_to(utils.to_dgl_context(device))
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/heterograph_index.py", line 236, in copy_to
+    return _CAPI_DGLHeteroCopyTo(self, ctx.device_type, ctx.device_id)
+  File "dgl/_ffi/_cython/./function.pxi", line 287, in dgl._ffi._cy3.core.FunctionBase.__call__
+  File "dgl/_ffi/_cython/./function.pxi", line 222, in dgl._ffi._cy3.core.FuncCall
+  File "dgl/_ffi/_cython/./function.pxi", line 211, in dgl._ffi._cy3.core.FuncCall3
+  File "dgl/_ffi/_cython/./base.pxi", line 155, in dgl._ffi._cy3.core.CALL
+dgl._ffi.base.DGLError: [10:47:46] /opt/dgl/src/runtime/cuda/cuda_device_api.cc:93: Check failed: e == cudaSuccess || e == cudaErrorCudartUnloading: CUDA: no CUDA-capable device is detected
+Stack trace:
+  [bt] (0) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(dmlc::LogMessageFatal::~LogMessageFatal()+0x4f) [0x7fc096c4158f]
+  [bt] (1) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(dgl::runtime::CUDADeviceAPI::AllocDataSpace(DLContext, unsigned long, unsigned long, DLDataType)+0x28b) [0x7fc0971199bb]
+  [bt] (2) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(dgl::runtime::NDArray::Empty(std::vector<long, std::allocator<long> >, DLDataType, DLContext)+0x351) [0x7fc096f87b61]
+  [bt] (3) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(dgl::runtime::NDArray::CopyTo(DLContext const&, void* const&) const+0xc7) [0x7fc096fc1d97]
+  [bt] (4) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(dgl::UnitGraph::CopyTo(std::shared_ptr<dgl::BaseHeteroGraph>, DLContext const&, void* const&)+0x2ff) [0x7fc0970dc86f]
+  [bt] (5) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(dgl::HeteroGraph::CopyTo(std::shared_ptr<dgl::BaseHeteroGraph>, DLContext const&, void* const&)+0x109) [0x7fc096fd3989]
+  [bt] (6) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(+0x6acc99) [0x7fc096fe0c99]
+  [bt] (7) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/libdgl.so(DGLFuncCall+0x48) [0x7fc096f65eb8]
+  [bt] (8) /home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/dgl/_ffi/_cy3/core.cpython-39-x86_64-linux-gnu.so(+0x16ce2) [0x7fc0859b5ce2]
