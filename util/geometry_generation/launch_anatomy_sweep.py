@@ -30,6 +30,16 @@ def generate_aorta_junction_mesh(geo_name, geo_params, anatomy, mesh_divs, spher
     print("Mesh Done!")
     return
 
+def generate_pulmo_junction_mesh(geo_name, geo_params, anatomy, mesh_divs, sphere_ref, sphere_offset = 0):
+
+    segmentations = get_pulmo_junction_segmentation(geo_params)
+    print("Segmentation Done!")
+    model = construct_model(geo_name, segmentations, geo_params)
+    print("Model Done!")
+    mesh = get_mesh(geo_name, model, geo_params, anatomy, mesh_divs, sphere_ref, sphere_offset)
+    print("Mesh Done!")
+    return
+
 def generate_mynard_junction_mesh(geo_name, geo_params, anatomy, mesh_divs, sphere_ref, sphere_offset = 0):
 
     segmentations = get_mynard_junction_segmentation(geo_params)
@@ -64,6 +74,8 @@ def launch_anatomy_geo_sweep(anatomy, num_geos = 5, anatomy_type = "mynard"):
                     generate_mynard_junction_mesh(geo_name, geo_params, anatomy, mesh_divs = 3, sphere_ref =0.5)
                 elif anatomy_type == "Aorta":
                     generate_aorta_junction_mesh(geo_name, geo_params, anatomy, mesh_divs = 2.5, sphere_ref = 0.5, sphere_offset = 0.7)
+                elif anatomy_type == "Pulmo":
+                    generate_pulmo_junction_mesh(geo_name, geo_params, anatomy, mesh_divs = 3, sphere_ref = 0.5, sphere_offset = 0.7)
                 else:
                     print("Didn't recognize anatomy type.")
 
@@ -92,7 +104,7 @@ def launch_mesh_sweep(anatomy, num_geos = 1, anatomy_type = "Aorta"):
     #mesh_divs_list = [0.5, 0.35, 0.2, 0.1, 0.09, 0.15]
     #mesh_divs_list = [1,  0.45, 0.2, 0.15]
     #mesh_divs_list = [0.8, 0.6, 0.5, 0.4]
-    mesh_divs_list = [1.5, 2, 2.5, 3, 1.2, 1]
+    mesh_divs_list = [1.5, 2, 2.5, 3, 4, 5, 6, 7, 9]
     for i in range(len(geos)):
 
         geo_name = geos[i]
@@ -107,6 +119,8 @@ def launch_mesh_sweep(anatomy, num_geos = 1, anatomy_type = "Aorta"):
                 generate_mynard_junction_mesh(geo_name, geo_params, anatomy, mesh_divs = mesh_divs_list[i], sphere_ref = 0.5)
             elif anatomy_type == "Aorta":
                 generate_aorta_junction_mesh(geo_name, geo_params, anatomy, mesh_divs = mesh_divs_list[i],  sphere_ref = 0.5, sphere_offset = 0.7)
+            elif anatomy_type == "Pulmo":
+                generate_pulmo_junction_mesh(geo_name, geo_params, anatomy, mesh_divs = mesh_divs_list[i],  sphere_ref = 0.5, sphere_offset = 0.7)
             else:
                 print("Didn't recognize anatomy type.")
 
@@ -138,10 +152,11 @@ def generate_pipe():
     return
 
 if __name__ == "__main__":
-    launch_anatomy_geo_sweep(anatomy = "Aorta_rand", num_geos = 200, anatomy_type = "Aorta")
+    #launch_anatomy_geo_sweep(anatomy = "Aorta_rand", num_geos = 200, anatomy_type = "Aorta")
     #write_pipe()
     #launch_mesh_sweep(anatomy = "mynard_vary_mesh", num_geos = 4, anatomy_type = "mynard")
-    #launch_mesh_sweep(anatomy = "Aorta_vary_mesh", num_geos = 6, anatomy_type = "Aorta")
+    launch_mesh_sweep(anatomy = "Pulmo_vary_rout", num_geos = 3, anatomy_type = "Pulmo")
+    launch_anatomy_geo_sweep(anatomy = "Pulmo_rand", num_geos = 150, anatomy_type = "Pulmo")
 
 # USE THIS COMMAND TO RUN WITH SIMVASCULAR:
 # /usr/local/sv/simvascular/2023-02-02/simvascular --python -- util/geometry_generation/launch_anatomy_sweep.py

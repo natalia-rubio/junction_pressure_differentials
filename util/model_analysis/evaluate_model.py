@@ -24,21 +24,25 @@ def dP_poiseuille(flow, radius, length):
 
 def vary_param(anatomy, variable, dP_type):
     plt.clf()
-    #model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_500_seed_0_geos_187"#mynard
-    model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_1000_seed_0_geos_110"#aorta
+
+    if anatomy == "mynard":
+        model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_500_seed_0_geos_187"#mynard
+        char_val_dict = load_dict(f"data/characteristic_value_dictionaries/mynard_vary_rout_synthetic_data_dict")
+        scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
+
+    elif anatomy == "Aorta":
+        model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_1000_seed_0_geos_110"#aorta
+        char_val_dict = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout_synthetic_data_dict")
+        scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_rand_scaling_dict_steady")
+
+    elif anatomy == "Pulmo":
+        model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_127"
+        char_val_dict = load_dict(f"data/characteristic_value_dictionaries/Pulmo_vary_rout_synthetic_data_dict")
+        scaling_dict = load_dict(f"data/scaling_dictionaries/Pulmo_rand_scaling_dict_steady")
+
     nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name, compile=True)
 
-    #junction_params = load_dict(f"/home/nrubio/Desktop/synthetic_junctions/Aorta_vary_r2/{geo}/junction_params_dict")
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout_synthetic_data_dict")
-    #char_val_dict = load_dict(f"data/characteristic_value_dictionaries/mynard_vary_rout_synthetic_data_dict")
-    #char_val_dict0 = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout/synthetic_data_dict_steady")
-    #print(char_val_dict)
-    #scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
-    scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_rand_scaling_dict_steady")
-    #print(scaling_dict)
-    #scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_u_40-60_over3_scaling_dict_steady")
     dPs = []
-    print(char_val_dict)
     for i in reversed(range(int(len(char_val_dict["name"])/2))):
 
         if i/int(len(char_val_dict["name"])/2) < 0.5:
@@ -110,7 +114,7 @@ def vary_param(anatomy, variable, dP_type):
 
         flow_arr = flow_tensor.numpy()
         dP_mynard_list = []
-        #print(char_val_dict["outlet_radius"])
+        print(char_val_dict["outlet_radius"])
         if dP_type == "end":
             for j in range(1,100):
                     dP_mynard_list = dP_mynard_list + [apply_unified0D_plus(junction_dict_global[j])[outlet_ind] \
@@ -123,7 +127,7 @@ def vary_param(anatomy, variable, dP_type):
         dP_mynard = np.asarray(dP_mynard_list)
 
         if variable == "rout":
-            plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = f"outlet radius = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} (cm)", c = colors[i+1], linewidth=2)
+            plt.plot(np.asarray(flow_tensor_cont), np.asarray(tf.reshape(pred_dP, [-1,]))/1333, label = "$r_{outlet}$" + f" = { char_val_dict['outlet_radius'][2*i+outlet_ind]:.2f} cm", c = colors[i+1], linewidth=2)
 
             plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i+1], linewidth=2 )
             #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", c = colors[i], linewidth=2, label = f"unified0D_plus")
@@ -141,7 +145,9 @@ def vary_param(anatomy, variable, dP_type):
     plt.xlabel("$Q \;  (\mathrm{cm^3/s})$")
     plt.ylabel("$\Delta P$ (mmHg)")
     plt.legend(fontsize="14")
-    plt.savefig(f"results/model_visualization/{anatomy}_{variable}_vs_predicted_dps_{dP_type}_steady.pdf", bbox_inches='tight', format = "pdf")
+    fig = plt.gcf()
+    fig.set_size_inches(4,5)
+    fig.savefig(f"results/model_visualization/{anatomy}_{variable}_vs_predicted_dps_{dP_type}_steady.pdf", bbox_inches='tight', format = "pdf")
     return
 
 

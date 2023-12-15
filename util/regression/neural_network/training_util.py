@@ -14,6 +14,7 @@ import json
 import pathlib
 import matplotlib.pyplot as plt
 import tensorflow as tf
+tf.random.set_seed(0)
 import pickle
 import random
 random.seed(10)

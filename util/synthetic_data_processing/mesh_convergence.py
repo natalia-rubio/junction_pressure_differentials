@@ -25,7 +25,7 @@ def dP_poiseuille(flow, radius, length):
 def vary_param(anatomy, variable):
     color = "royalblue"
     dP_type = "end"
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict_steady")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
 
     scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
     dPs = []
@@ -36,23 +36,26 @@ def vary_param(anatomy, variable):
     ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
     re_max = 0
 
-    for i in range(int(len(char_val_dict["name"])/2)):
+    for i in range(6):#int(len(char_val_dict["name"])/2)):
         print(char_val_dict["name"][2*i])
-        if i/int(len(char_val_dict["name"])/2) < 0.5:
-            outlet_ind = 1
-        else:
-            outlet_ind = 1
+        outlet_ind = 1
+        if char_val_dict["outlet_area"][2*i] < char_val_dict["outlet_area"][2*i +1 ]:
+            outlet_ind = 0
+        # if i/int(len(char_val_dict["name"])/2) < 0.5:
+        #     outlet_ind = 1
+        # else:
+        #     outlet_ind = 1
         #print(outlet_ind)
 
-        if i/int(len(char_val_dict["name"])/2) < 0.5:
-            outlet_ind = 1
-        else:
-            outlet_ind = 0
-        #print(outlet_ind)
+        # if i/int(len(char_val_dict["name"])/2) < 0.5:
+        #     outlet_ind = 1
+        # else:
+        #     outlet_ind = 0
+        # #print(outlet_ind)
 
         inlet_data = np.stack((scale(scaling_dict, char_val_dict["inlet_area"][2*i], "inlet_area").reshape(1,-1),
                                 )).T
-
+        print(char_val_dict["outlet_area"][2*i:2*i+2])
         outlet_data = np.stack((
             scale(scaling_dict, np.asarray(char_val_dict["outlet_area"][2*i: 2*(i+1)]), "outlet_area"),
             scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i: 2*(i+1)]), "angle"),
@@ -95,9 +98,9 @@ def vary_param(anatomy, variable):
         input_tensor = master_tensor[0]
         flow_tensor = master_tensor[2]
         dP = master_tensor[4]
+        print(flow_tensor)
 
-
-        plt.scatter(np.asarray(flow_tensor)[0,:], np.asarray(dP)[outlet_ind,:]/1333, facecolors='none', edgecolors = color, marker = marker_list[i], s = 100, label = f"{ref_list[i]} mesh elements")
+        plt.scatter(np.asarray(flow_tensor)[outlet_ind,:], np.asarray(dP)[outlet_ind,:]/1333, facecolors='none', edgecolors = color, marker = marker_list[i], s = 50, label = f"{ref_list[i]} mesh elements")
         re_max = max(re_max, get_re(inlet_flow = np.max(np.asarray(flow_tensor)[0,:]), inlet_radius = char_val_dict["outlet_radius"][2*i]))
 
     flow_tensor_cont = tf.linspace(flow_tensor[outlet_ind,0], flow_tensor[outlet_ind,-1], 100)
@@ -125,5 +128,5 @@ def vary_param(anatomy, variable):
     plt.savefig(f"results/mesh_convergence/mesh_refinement_study_{anatomy}.pdf", bbox_inches='tight', format = "pdf")
     return
 
-vary_param("Aorta_vary_mesh", "rout")
+vary_param("Pulmo_vary_mesh", "rout")
 #vary_param("Aorta_vary_angle", "angle")

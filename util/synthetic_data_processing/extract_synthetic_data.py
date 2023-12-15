@@ -82,43 +82,48 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
 
     for j, geo in enumerate(geos[0:]):
 
-        #try:
-        junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{geo}/junction_params_dict")
-        print(junction_params)
+        try:
+            junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{geo}/junction_params_dict")
+            print(junction_params)
 
-        flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, geo, require4)
+            flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, geo, require4)
 
-        if len(flow_lists[0]) <= 2:
+            if len(flow_lists[0]) <= 2:
+                continue
+
+            if unsteady:
+                try:
+                    unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, geo)
+                except:
+                    continue
+            char_val_dict["flow_list"] += flow_lists
+            char_val_dict["dP_list"] += dP_lists
+            char_val_dict["dP_junc_list"] += dP_junc_lists
+
+            if unsteady:
+                unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, geo)
+                char_val_dict["unsteady_flow_list"] += unsteady_flow_lists
+                char_val_dict["unsteady_flow_der_list"] += unsteady_flow_der_lists
+                char_val_dict["unsteady_dP_list"] += unsteady_dP_lists
+
+            results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/flow_1_red_sol"
+            soln_dict = load_dict(results_dir)
+
+            char_val_dict["inlet_radius"] += [np.sqrt(soln_dict["area"][2]/np.pi), np.sqrt(soln_dict["area"][2]/np.pi)]
+            char_val_dict["outlet_radius"] += [np.sqrt(soln_dict["area"][0]/np.pi), np.sqrt(soln_dict["area"][1]/np.pi)]
+
+            char_val_dict["inlet_area"] += [soln_dict["area"][2],soln_dict["area"][2]]
+            char_val_dict["outlet_area"] += [soln_dict["area"][0], soln_dict["area"][1]]
+
+            char_val_dict["inlet_length"] += [soln_dict["length"][2], soln_dict["length"][2]]
+            char_val_dict["outlet_length"] += [soln_dict["length"][0], soln_dict["length"][1]]
+
+            char_val_dict["angle"] += [junction_params["outlet1_angle"], junction_params["outlet2_angle"]]
+            char_val_dict["name"] += [geo+"_1", geo+"_2"]
+        
+        except:
+            print(f"Problem extracting junction data.  Skipping {geo}.")
             continue
-
-        char_val_dict["flow_list"] += flow_lists
-        char_val_dict["dP_list"] += dP_lists
-        char_val_dict["dP_junc_list"] += dP_junc_lists
-
-        if unsteady:
-            unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, geo)
-            char_val_dict["unsteady_flow_list"] += unsteady_flow_lists
-            char_val_dict["unsteady_flow_der_list"] += unsteady_flow_der_lists
-            char_val_dict["unsteady_dP_list"] += unsteady_dP_lists
-
-        results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/flow_1_red_sol"
-        soln_dict = load_dict(results_dir)
-
-        char_val_dict["inlet_radius"] += [np.sqrt(soln_dict["area"][2]/np.pi), np.sqrt(soln_dict["area"][2]/np.pi)]
-        char_val_dict["outlet_radius"] += [np.sqrt(soln_dict["area"][0]/np.pi), np.sqrt(soln_dict["area"][1]/np.pi)]
-
-        char_val_dict["inlet_area"] += [soln_dict["area"][2],soln_dict["area"][2]]
-        char_val_dict["outlet_area"] += [soln_dict["area"][0], soln_dict["area"][1]]
-
-        char_val_dict["inlet_length"] += [soln_dict["length"][2], soln_dict["length"][2]]
-        char_val_dict["outlet_length"] += [soln_dict["length"][0], soln_dict["length"][1]]
-
-        char_val_dict["angle"] += [junction_params["outlet1_angle"], junction_params["outlet2_angle"]]
-        char_val_dict["name"] += [geo+"_1", geo+"_2"]
-        #
-        # except:
-        #     print(f"Problem extracting junction data.  Skipping {geo}.")
-        #     continue
 
 
     save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")

@@ -2,7 +2,7 @@ import sys
 import psutil
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.regression.neural_network.training_util import *
-
+tf.random.set_seed(0)
 #scaling_dict = load_dict("/home/nrubio/Desktop/aorta_scaling_dict")
 def print_error(train_results, val_results, epoch):
     msg = '{:.0f}\t'.format(epoch)

@@ -9,6 +9,7 @@ import dgl.function as fn
 import numpy as np
 import pdb
 tf.keras.regularizers.L2(l2=0.1)
+tf.random.set_seed(0)
 
 def inv_scale_tf(scaling_dict, field, field_name):
     mean = tf.constant(scaling_dict[field_name][0], dtype = "float64")
@@ -19,7 +20,7 @@ def inv_scale_tf(scaling_dict, field, field_name):
 
 def MLP(in_feats, latent_space, out_feats, n_h_layers):
     #initializer = tf.keras.initializers.Zeros()
-    initializer = tf.keras.initializers.RandomNormal()
+    initializer = tf.keras.initializers.RandomNormal(seed = 0)
 
     encoder_in = tf.keras.layers.Dense(latent_space, activation="relu", use_bias = True, dtype=tf.float64)
     encoder_out = tf.keras.layers.Dense(out_feats, activation=None, use_bias = True, dtype=tf.float64)

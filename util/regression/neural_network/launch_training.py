@@ -3,6 +3,7 @@ sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 import dgl
 import tensorflow as tf
+tf.random.set_seed(0)
 
 from util.regression.neural_network.graphnet_nn import GraphNet
 from util.regression.neural_network.training_nn import *
@@ -89,6 +90,12 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
     return train_mse, val_mse, model_name
 
 if __name__ == "__main__":
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 110,  seed = 0, unsteady = False, config = None)
+    anatomy = sys.argv[1]
+    num_geos = int(sys.argv[2])
+    unsteady_text = sys.argv[3]
+    unsteady = False
+    if unsteady_text == "unsteady":
+        unsteady = True
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = anatomy, num_geos = num_geos,  seed = 0, unsteady = unsteady, config = None)
     #train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "mynard_rand", num_geos = 187,  seed = 0, unsteady = False, config = None)
     print(f"Train MSE: {train_mse}.  Val MSE {val_mse}.")

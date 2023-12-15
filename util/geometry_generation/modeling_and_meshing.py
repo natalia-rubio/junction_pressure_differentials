@@ -65,8 +65,8 @@ def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3, sphere_ref =
 
     #options.boundary_layer_inside = True
 
-    options.optimization = 6
-    options.quality_ratio = 1.4
+    options.optimization = 10
+    options.quality_ratio = 1#1.4
     options.no_bisect = True
     options.minimum_dihedral_angle = 18.0
 
