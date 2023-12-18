@@ -2,7 +2,14 @@ import sys
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 
-def get_coefs(anatomy, rm_low_r2 = True, unsteady = False):
+def get_name_end( unsteady = False, use_steady_ab = True):
+    name_end = ""
+    if unsteady and use_steady_ab:
+        name_end += "steady_ab"
+    if not unsteady:
+        name_end += "steady"
+
+def get_coefs(anatomy, rm_low_r2 = True, unsteady = False, use_steady_ab = True):
 
     num_outlets = 2
     char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
@@ -20,32 +27,49 @@ def get_coefs(anatomy, rm_low_r2 = True, unsteady = False):
 
         r2_unsteady = 0; r2_steady = 0
         if unsteady:
-            Q_unsteady = char_val_dict["unsteady_flow_list"][outlet_ind].reshape(-1,1)
-            dQdt = char_val_dict["unsteady_flow_der_list"][outlet_ind].reshape(-1,1)
-            dP_unsteady = char_val_dict["unsteady_dP_list"][outlet_ind].reshape(-1,1)
-            # dP_steady_pred = a*np.square(Q_unsteady) + b*Q_unsteady
-            # dP_unsteady_comp = dP_unsteady - dP_steady_pred
-            #
-            # X_unsteady = dQdt.reshape(-1,1)
-            # coefs, residuals, t, q = np.linalg.lstsq(X_unsteady, dP_unsteady_comp, rcond=None);
-            # r2_unsteady = get_r2(X_unsteady, dP_unsteady_comp, coefs.reshape(-1,1))
-            #
-            # L = coefs[0]
-            # char_val_dict["coef_L"].append(L)
-            X_unsteady = np.hstack([np.square(Q_unsteady), Q_unsteady, dQdt])
+            if use_steady_ab:
+                dP = np.asarray(dP_list).reshape(-1,1)
+                X = np.hstack([np.square(Q), Q])
+                coefs, residuals, t, q = np.linalg.lstsq(X, dP, rcond=None);
+                if (np.linalg.norm(residuals)/(1333**2))> 0.01:
+                    print(f"geo: {geo} {(np.linalg.norm(residuals)/(1333**2))}")
 
-            #import pdb; pdb.set_trace()
-            coefs, residuals, t, q = np.linalg.lstsq(X_unsteady, dP_unsteady, rcond=None);
+                a = coefs[0][0]; b = coefs[1][0]
 
-            r2_unsteady = get_r2(X_unsteady, dP_unsteady, coefs.reshape(-1,1))
-            print(r2_unsteady)
-            print(residuals)
-            print(f"Error: {np.sqrt(residuals/dP_unsteady.size)/1333}")
-            #print(coefs)
-            a = coefs[0][0]; b = coefs[1][0]
-            char_val_dict["coef_a"].append(a); char_val_dict["coef_b"].append(b)
-            L = coefs[2][0]
-            char_val_dict["coef_L"].append(L)
+                Q_unsteady = char_val_dict["unsteady_flow_list"][outlet_ind].reshape(-1,1)
+                dQdt = char_val_dict["unsteady_flow_der_list"][outlet_ind].reshape(-1,1)
+                dP_unsteady = char_val_dict["unsteady_dP_list"][outlet_ind].reshape(-1,1) - (a * np.square(Q_unsteady) + b * Q_unsteady)
+                #X_unsteady = np.hstack([np.square(Q_unsteady), Q_unsteady, dQdt])
+
+                coefs, residuals, t, q = np.linalg.lstsq(dQdt, dP_unsteady, rcond=None);
+
+                r2_unsteady = get_r2(dQdt, dP_unsteady, coefs.reshape(-1,1))
+                print(r2_unsteady)
+                print(residuals)
+                print(f"Error: {np.sqrt(residuals/dP_unsteady.size)/1333}")
+                #print(coefs)
+                #a = coefs[0][0]; b = coefs[1][0]
+                char_val_dict["coef_a"].append(a); char_val_dict["coef_b"].append(b)
+                L = coefs[0][0]
+                char_val_dict["coef_L"].append(L)
+
+            else:
+                Q_unsteady = char_val_dict["unsteady_flow_list"][outlet_ind].reshape(-1,1)
+                dQdt = char_val_dict["unsteady_flow_der_list"][outlet_ind].reshape(-1,1)
+                dP_unsteady = char_val_dict["unsteady_dP_list"][outlet_ind].reshape(-1,1)
+                X_unsteady = np.hstack([np.square(Q_unsteady), Q_unsteady, dQdt])
+
+                coefs, residuals, t, q = np.linalg.lstsq(X_unsteady, dP_unsteady, rcond=None);
+
+                r2_unsteady = get_r2(X_unsteady, dP_unsteady, coefs.reshape(-1,1))
+                print(r2_unsteady)
+                print(residuals)
+                print(f"Error: {np.sqrt(residuals/dP_unsteady.size)/1333}")
+                #print(coefs)
+                a = coefs[0][0]; b = coefs[1][0]
+                char_val_dict["coef_a"].append(a); char_val_dict["coef_b"].append(b)
+                L = coefs[2][0]
+                char_val_dict["coef_L"].append(L)
         else:
             dP = np.asarray(dP_list).reshape(-1,1)
             X = np.hstack([np.square(Q), Q])

@@ -53,12 +53,23 @@ def plot_unsteady(anatomy):
         dP_tensor = master_tensor[4][0,:]
 
         pred_outlet_coefs = tf.cast(nn_model.predict(input_tensor), dtype=tf.float64)
-        pred_dP = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
-                    tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor + \
-                    tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,2], "coef_L"), (-1,1)) * (flow_der_tensor)
+        use_steady_ab = True
+        print(output_tensor)
+        if use_steady_ab:
+            pred_dP = tf.reshape(inv_scale_tf(scaling_dict, output_tensor[0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
+                        tf.reshape(inv_scale_tf(scaling_dict, output_tensor[1], "coef_b"), (-1,1)) * flow_tensor + \
+                        tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,2], "coef_L"), (-1,1)) * (flow_der_tensor)
+        else:
+            pred_dP = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
+                        tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor + \
+                        tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,2], "coef_L"), (-1,1)) * (flow_der_tensor)
 
-        pred_dP_steady  = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
-                        tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor
+        print(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,0], "coef_a"), inv_scale_tf(scaling_dict, pred_outlet_coefs[:,1], "coef_b"), inv_scale_tf(scaling_dict, pred_outlet_coefs[:,2], "coef_L"))
+
+        # pred_dP_steady  = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
+        #                 tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor
+        pred_dP_steady  = tf.reshape(inv_scale_tf(scaling_dict, output_tensor[0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
+                        tf.reshape(inv_scale_tf(scaling_dict, output_tensor[1], "coef_b"), (-1,1)) * flow_tensor
 
 
         ax.plot(np.asarray(flow_tensor), np.asarray(tf.reshape(pred_dP[0,:], [-1,]))/1333, label = 'RRI (NN)', c = "royalblue", linewidth=2)
@@ -73,8 +84,8 @@ def plot_unsteady(anatomy):
         #     ax.set_xlabel("$Q \;  (\mathrm{cm^3/s})$")
         if i == 0:
             ax.legend(fontsize="14", loc = "upper right")
-    fig.text(0.5, -0.02, "$\Delta P$ (mmHg)", ha = "center")
-    fig.text(-0.08, 0.5, "$Q \;  (\mathrm{cm^3/s})$", rotation = "vertical", va = "center")
+    fig.text(0.5, -0.02, "$Q \;  (\mathrm{cm^3/s})$", ha = "center")
+    fig.text(-0.08, 0.5, "$\Delta P$ (mmHg)", rotation = "vertical", va = "center")
     fig.savefig(f"results/model_visualization/{anatomy}_unsteady_flow_vs_predicted_dps.pdf", bbox_inches='tight', transparent=True, format = "pdf")
 
     return

@@ -477,15 +477,33 @@ def print_aorta_ranges():
              - {(stats_list[0] + 0.6 * (stats_list[1]-stats_list[0]))}")
 
     return
+
+def print_pulmo_ranges():
+    params_stat_dict = load_dict("data/param_stat_dict")["Pulmonary"]
+    inlet_radius = get_random(params_stat_dict["inlet_radius"])
+    outlet1_angle = get_random(params_stat_dict["angle"])*180/np.pi
+    outlet2_angle = get_random(params_stat_dict["angle"])*180/np.pi
+
+    for param in params_stat_dict.keys():
+        stats_list = params_stat_dict[param]
+        if param == "angle":
+            print(f"{param}: {(stats_list[0] + 0.4 * (stats_list[1]-stats_list[0]))*180/np.pi}\
+             - {(stats_list[0] + 0.6 * (stats_list[1]-stats_list[0]))*180/np.pi}")
+        else:
+            print(f"{param}: {(stats_list[0] + 0.4 * (stats_list[1]-stats_list[0]))}\
+             - {(stats_list[0] + 0.6 * (stats_list[1]-stats_list[0]))}")
+
+    return
+
 if __name__ == '__main__':
     # write_junction_params_mynard()
     # write_pipe_params_sweep_mesh()
     # write_mynard_junction_params_sweep_outlet_radius()
     # write_aorta_junction_params_sweep_mesh()
     # write_pulmo_junction_params_sweep_mesh()
-    write_rout_sweep_junctions(anatomy = "Pulmo_vary_rout", start = 0, num_junctions = 3)
+    #write_rout_sweep_junctions(anatomy = "Pulmo_vary_rout", start = 0, num_junctions = 3)
     # write_anatomy_junctions(anatomy = "Aorta_rand", start = 0, num_junctions = 200)
     # write_mynard_junctions_rand(num_junctions = 200)
-    write_anatomy_junctions(anatomy = "Pulmo_rand", start = 0, num_junctions = 150)
+    #write_anatomy_junctions(anatomy = "Pulmo_rand", start = 0, num_junctions = 150)
     #print_mynard_ranges()
-    #print_aorta_ranges()
+    print_pulmo_ranges()

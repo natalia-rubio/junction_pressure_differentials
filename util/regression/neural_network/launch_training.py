@@ -73,7 +73,8 @@ def train_and_val_gnn(anatomy, seed = 0, num_geos = 10, num_flows = "none", grap
 
     model_name = get_model_name(network_params = network_params, train_params = train_params, seed = seed, num_geos = num_geos)
     print(f"Launching training.")
-    gnn_model = GraphNet(anatomy, network_params, unsteady)
+    use_steady_ab = True
+    gnn_model = GraphNet(anatomy, network_params, unsteady, use_steady_ab)
     gnn_model, val_mse, train_mse = train_gnn_model(anatomy,
                                                     gnn_model,
                                                       train_dataset,

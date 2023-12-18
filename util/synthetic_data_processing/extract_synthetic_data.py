@@ -55,7 +55,11 @@ def extract_unsteady_flow_data(anatomy, geo):
         unsteady_flow_lists[outlet_ind] = Q_unsteady[:, outlet_ind]
         unsteady_flow_der_lists[outlet_ind] = dQdt_unsteady[:, outlet_ind]
 
+    steady_flow_lists, steady_dP_lists, steady_dP_junc_lists = extract_steady_flow_data(anatomy, geo, require4 = False)
+    #
+    # steady_flow_der_lists = [[0 for i in flow_list] for flow_list in steady_flow_lists]
     return unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists
+    #return unsteady_flow_lists + steady_flow_lists, unsteady_flow_der_lists + steady_flow_der_lists, unsteady_dP_lists + steady_dP_lists
 
 
 
@@ -96,6 +100,7 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
                     unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, geo)
                 except:
                     continue
+
             char_val_dict["flow_list"] += flow_lists
             char_val_dict["dP_list"] += dP_lists
             char_val_dict["dP_junc_list"] += dP_junc_lists
@@ -120,7 +125,7 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
 
             char_val_dict["angle"] += [junction_params["outlet1_angle"], junction_params["outlet2_angle"]]
             char_val_dict["name"] += [geo+"_1", geo+"_2"]
-        
+
         except:
             print(f"Problem extracting junction data.  Skipping {geo}.")
             continue

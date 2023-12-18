@@ -67,7 +67,7 @@ def graphs_to_junction_dict_steady_cont(graph_list, scaling_dict):
                     {junction_counter: junction})
             junction_counter += 1 # update junction counter
     pickle.dump(junction_dict_global, open("data/junction_dictionaries/junction_dict_steady.pkl", "wb"))  # save pickled dictionary
-    print("Done grouping junctions.")
+    #print("Done grouping junctions.")
     return junction_dict_global
 
 
@@ -81,12 +81,13 @@ def graphs_to_junction_dict_steady(graph, scaling_dict):
                 {junction_counter: get_features_from_graph_steady(graph, scaling_dict, time_ind)})
         junction_counter += 1 # update junction counter
 
-    print("Done grouping junctions.")
+    #print("Done grouping junctions.")
     return junction_dict_global
 
 def get_features_from_graph_steady(graph, scaling_dict, time_ind):
 
     inlet_data = graph.nodes["inlet"].data["inlet_features"].numpy()
+    #print(inlet_data)
     outlet_data = graph.nodes["outlet"].data["outlet_features"].numpy()
 
     outlet_dP = graph.nodes["outlet"].data["outlet_dP"].numpy()[:, time_ind]

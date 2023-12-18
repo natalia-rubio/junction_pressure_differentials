@@ -4,7 +4,16 @@ from lin_reg import *
 from svr import *
 from gpr import *
 
-anatomy = "Aorta_rand"; num_geos_steady = 110; num_geos_unsteady = 110
+import sys
+
+anatomy = sys.argv[1];
+
+if anatomy == "Aorta_rand":
+    num_geos_steady = 110; num_geos_unsteady = 110
+elif anatomy == "Pulmo_rand":
+        num_geos_steady = 127; num_geos_unsteady = 127
+elif anatomy == "mynard_rand":
+        num_geos_steady = 187; num_geos_unsteady = 127
 
 print ("{:<8} {:<10} {:<10} {:<10} {:<10}".format('Model','Steady (Train)','Steady (Val)','Unsteady (Train)', 'Unsteady (Val)'))
 

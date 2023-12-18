@@ -14,7 +14,7 @@ if unsteady_text == "unsteady":
 collect_synthetic_results(anatomy = anatomy, require4 = False, unsteady = unsteady)
 print("Extracted simulation results.")
 
-get_coefs(anatomy = anatomy, rm_low_r2 = True, unsteady = unsteady)
+get_coefs(anatomy = anatomy, rm_low_r2 = False, unsteady = unsteady)
 print("Fitted dP(Q) coefficients.")
 
 get_geo_scalings(anatomy, unsteady = unsteady)

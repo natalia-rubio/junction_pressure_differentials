@@ -144,20 +144,11 @@ def vary_param(anatomy, variable, dP_type):
 
     plt.xlabel("$Q \;  (\mathrm{cm^3/s})$")
     plt.ylabel("$\Delta P$ (mmHg)")
-    plt.legend(fontsize="14")
+    plt.legend(fontsize="14", loc = "upper center", bbox_to_anchor = (0.5, 1.33))
     fig = plt.gcf()
-    fig.set_size_inches(4,5)
+    fig.set_size_inches(3,4)
     fig.savefig(f"results/model_visualization/{anatomy}_{variable}_vs_predicted_dps_{dP_type}_steady.pdf", bbox_inches='tight', format = "pdf")
     return
-
-
-# vary_param("Aorta_vary_rout_over_5", "rout", dP_type = "junction")
-#
-# vary_param("Aorta_vary_rout_over_5", "rout", dP_type = "end")
-# vary_param("mynard_vary_rout", "rout", dP_type = "junction")
-#
-# vary_param("mynard_vary_rout", "rout", dP_type = "end")
-#
 
 anatomy = sys.argv[1];
 vary_param(anatomy, "rout", "end")

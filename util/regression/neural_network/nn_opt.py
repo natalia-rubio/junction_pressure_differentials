@@ -19,7 +19,7 @@ ray.init(
 
 def objective(config):
 
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 110,  seed = 0, unsteady = True, config = config)
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 127,  seed = 0, unsteady = True, config = config)
     metric = val_mse
 
     train.report({"inference_performance": float(metric)})  # Report to Tune
@@ -29,8 +29,8 @@ def main():
     "lr": tune.loguniform(1e-2, 3e-1),
     "lr_decay": tune.loguniform(1e-3, 1e-1),
     "batch_size": tune.randint(15, 30),
-    "latent_size_mlp": tune.randint(40, 70),
-    "hl_mlp": tune.randint(1, 4)}
+    "latent_size_mlp": tune.randint(30, 70),
+    "hl_mlp": tune.randint(1, 3)}
     algo = OptunaSearch()
 
     objective_with_gpu = tune.with_resources(objective, {"gpu": 3})

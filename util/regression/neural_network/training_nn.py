@@ -29,7 +29,7 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None, unstea
 
     for batch_ind in range(len(dataloader[0])):
         #import pdb; pdb.set_trace()
-        pred_outlet_output = gnn_model.forward(input_tensors[batch_ind])
+        pred_outlet_output = gnn_model.forward(input_tensors[batch_ind], output_tensors[batch_ind])
         true_outlet_output = output_tensors[batch_ind]
         # print(f"True Coefficients {true_outlet_output[:2, :]}")
         # print(f"Predicted Coefficients {pred_outlet_output[:2, :]}")
@@ -37,6 +37,7 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None, unstea
         coef_loss = coef_loss + coef_loss_value.numpy()
 
         dP_loss_value = tf.math.sqrt(gnn_model.get_dP_loss(input_tensors[batch_ind],
+                            output_tensors[batch_ind],
                             flow_tensors[batch_ind],
                             flow_der_tensors[batch_ind],
                             dP_tensors[batch_ind],

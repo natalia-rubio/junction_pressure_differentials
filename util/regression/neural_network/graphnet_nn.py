@@ -38,10 +38,11 @@ def MLP(in_feats, latent_space, out_feats, n_h_layers):
     return model
 
 class GraphNet(tf.Module):
-    def __init__(self, anatomy, params, unsteady):
+    def __init__(self, anatomy, params, unsteady, use_steady_ab):
         super(GraphNet, self).__init__()
 
         self.unsteady = unsteady
+        self.use_steady_ab = use_steady_ab
         self.nn_model = MLP(params["num_inlet_ft"] + 2*params["num_outlet_ft"],
                                         params['latent_size_mlp'],
                                         params['out_size'],
@@ -59,7 +60,7 @@ class GraphNet(tf.Module):
         model_list = [self.nn_model]
         return model_list
 
-    def forward(self, g):
+    def forward(self, g, output_tensor):
         #import pdb; pdb.set_trace()
         # input = tf.concat((g.nodes["inlet"].data['inlet_features'],
         #                         g.nodes["outlet"].data['outlet_features'][::2,:],
@@ -68,6 +69,9 @@ class GraphNet(tf.Module):
 
         output = self.nn_model(g)
         stacked_output = tf.reshape(output, [-1,self.params['out_size']])
+        if self.use_steady_ab:
+            #import pdb; pdb.set_trace()
+            stacked_output = tf.transpose(tf.stack([output_tensor[:, 0], output_tensor[:, 1], stacked_output[:, 2]]))
         #import pdb; pdb.set_trace()
         return stacked_output
 
@@ -75,10 +79,10 @@ class GraphNet(tf.Module):
 
         with tf.GradientTape() as tape:
             tape.reset()
-            pred_outlet_output = tf.cast(self.forward(batched_graph), dtype=tf.float64)
+            pred_outlet_output = tf.cast(self.forward(batched_graph, output_tensor), dtype=tf.float64)
             true_outlet_output = output_tensor
             #loss_value = loss(pred_outlet_output, true_outlet_output)
-            loss_value = self.get_dP_loss(batched_graph, flow_tensor,flow_der_tensor, dP_tensor, loss)
+            loss_value = self.get_dP_loss(batched_graph, output_tensor, flow_tensor,flow_der_tensor, dP_tensor, loss)
 
 
         model_list =  self.get_model_list()
@@ -89,9 +93,9 @@ class GraphNet(tf.Module):
         #import pdb; pdb.set_trace()
         return loss_value
 
-    def get_dP_loss(self, input_tensor, flow_tensor, flow_der_tensor, dP_tensor, loss):
+    def get_dP_loss(self, input_tensor, output_tensor, flow_tensor, flow_der_tensor, dP_tensor, loss):
 
-        pred_outlet_coefs = tf.cast(self.forward(input_tensor), dtype=tf.float64)
+        pred_outlet_coefs = tf.cast(self.forward(input_tensor, output_tensor), dtype=tf.float64)
         if self.unsteady:
             pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
             tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor  + \

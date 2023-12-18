@@ -17,14 +17,15 @@ def dP_poiseuille(flow, radius, length):
 
 
 
-def plot_unsteady(graph_list):
+def plot_unsteady(graph_list, anatomy):
 
-    scaling_dict = load_dict("data/scaling_dictionaries/Aorta_rand_scaling_dict")
+    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
     dP_mynard = []
     dP_true = []
     for j in range(graph_list.size):
 
         graph = graph_list[j]
+        #print(graph.nodes["inlet"])
         master_tensor = get_master_tensors_steady([graph])
         #
         flow_tensor = master_tensor[2]
@@ -51,8 +52,16 @@ def plot_unsteady(graph_list):
     return
 
 
-anatomy = "Aorta_rand"
-num_geos = 110
+#anatomy = "Aorta_rand"
+anatomy = sys.argv[1];
+
+if anatomy == "Aorta_rand":
+    num_geos_steady = 110; num_geos_unsteady = 110
+elif anatomy == "Pulmo_rand":
+        num_geos_steady = 127; num_geos_unsteady = 127
+elif anatomy == "mynard_rand":
+        num_geos_steady = 187; num_geos_unsteady = 127
 print("Validation")
-graph_list = load_dict(f"data/graph_lists/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_0_graph_list")
-plot_unsteady(graph_list)
+graph_list = load_dict(f"data/graph_lists/{anatomy}/val_{anatomy}_num_geos_{num_geos_steady}_seed_0_graph_list_steady")
+print(f"data/graph_lists/{anatomy}/val_{anatomy}_num_geos_{num_geos_steady}_seed_0_graph_list")
+plot_unsteady(graph_list, anatomy)
