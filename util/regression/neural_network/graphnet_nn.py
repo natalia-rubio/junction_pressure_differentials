@@ -38,22 +38,26 @@ def MLP(in_feats, latent_space, out_feats, n_h_layers):
     return model
 
 class GraphNet(tf.Module):
-    def __init__(self, anatomy, params, unsteady, use_steady_ab):
+    def __init__(self, anatomy, params, unsteady, unsteady_opt, loss_type):
         super(GraphNet, self).__init__()
-
+        self.loss_type = loss_type
         self.unsteady = unsteady
-        self.use_steady_ab = use_steady_ab
+        self.UO = unsteady_opt
         self.nn_model = MLP(params["num_inlet_ft"] + 2*params["num_outlet_ft"],
                                         params['latent_size_mlp'],
                                         params['out_size'],
                                         params['hl_mlp'])
 
         self.params = params
-        if unsteady:
-            self.scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_scaling_dict")
-        else:
-            self.scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
-        print(params['out_size'])
+        self.scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_scaling_dict")
+        if unsteady and not unsteady_opt:
+            if anatomy[0:5] == "Pulmo":
+                steady_model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_123_steady"
+                #self.steady_model = tf.keras.models.load_model("results/models/neural_network/steady/"+steady_model_name, compile=True)
+            if anatomy[0:5] == "Aorta":
+                #steady_model_name = "1_hl_52_lsmlp_0_005_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_110_coef_steady"
+                steady_model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_110_steady"
+            self.steady_model = tf.keras.models.load_model("/home/nrubio/Desktop/junction_pressure_differentials/results/models/neural_network/steady/"+steady_model_name, compile=True)
         return
 
     def get_model_list(self):
@@ -61,18 +65,13 @@ class GraphNet(tf.Module):
         return model_list
 
     def forward(self, g, output_tensor):
-        #import pdb; pdb.set_trace()
-        # input = tf.concat((g.nodes["inlet"].data['inlet_features'],
-        #                         g.nodes["outlet"].data['outlet_features'][::2,:],
-        #                         g.nodes["outlet"].data['outlet_features'][1::2,:]), axis = 1)
-        #print(input.shape)
 
         output = self.nn_model(g)
         stacked_output = tf.reshape(output, [-1,self.params['out_size']])
-        if self.use_steady_ab:
-            #import pdb; pdb.set_trace()
-            stacked_output = tf.transpose(tf.stack([output_tensor[:, 0], output_tensor[:, 1], stacked_output[:, 2]]))
-        #import pdb; pdb.set_trace()
+        # if self.use_steady_ab:
+        #     #import pdb; pdb.set_trace()
+        #     stacked_output = tf.transpose(tf.stack([output_tensor[:, 0], output_tensor[:, 1], stacked_output[:, 2]]))
+        # #import pdb; pdb.set_trace()
         return stacked_output
 
     def update_nn_weights(self, batched_graph, output_tensor, flow_tensor, flow_der_tensor, dP_tensor, optimizer, loss, output_name):
@@ -82,7 +81,10 @@ class GraphNet(tf.Module):
             pred_outlet_output = tf.cast(self.forward(batched_graph, output_tensor), dtype=tf.float64)
             true_outlet_output = output_tensor
             #loss_value = loss(pred_outlet_output, true_outlet_output)
-            loss_value = self.get_dP_loss(batched_graph, output_tensor, flow_tensor,flow_der_tensor, dP_tensor, loss)
+            if self.loss_type == "dP":
+                loss_value = self.get_dP_loss(batched_graph, output_tensor, flow_tensor,flow_der_tensor, dP_tensor, loss)
+            elif self.loss_type == "coef":
+                loss_value = self.get_coef_loss(batched_graph, output_tensor, flow_tensor,flow_der_tensor, dP_tensor, loss)
 
 
         model_list =  self.get_model_list()
@@ -96,27 +98,50 @@ class GraphNet(tf.Module):
     def get_dP_loss(self, input_tensor, output_tensor, flow_tensor, flow_der_tensor, dP_tensor, loss):
 
         pred_outlet_coefs = tf.cast(self.forward(input_tensor, output_tensor), dtype=tf.float64)
-        if self.unsteady:
-            pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
-            tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor  + \
-                    tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,2], "coef_L"), (-1,1)) * flow_der_tensor
+        #pred_a = tf.reshape(inv_scale_tf(self.scaling_dict, self.steady_model(input_tensor)[:,0], "coef_a"), (-1,1))
+        #ipred_b = tf.reshape(inv_scale_tf(self.scaling_dict, self.steady_model(input_tensor)[:,1], "coef_b"), (-1,1))
+        if self.unsteady and self.UO:
+            pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a_UO"), (-1,1)) * tf.square(flow_tensor) + \
+            tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b_UO"), (-1,1)) * flow_tensor  + \
+                    tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,2], "coef_L_UO"), (-1,1)) * flow_der_tensor
+        elif self.unsteady:
+            steady_dP = tf.reshape(inv_scale_tf(self.scaling_dict, self.steady_model(input_tensor)[:,0],'coef_a'),(-1,1))*tf.square(flow_tensor)+tf.reshape(inv_scale_tf(self.scaling_dict, self.steady_model(input_tensor)[:,1], 'coef_b'), (-1,1))* flow_tensor
+            #import pdb; pdb.set_trace()
+            pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs, "coef_L"), (-1,1)) * flow_der_tensor + \
+                        tf.reshape(inv_scale_tf(self.scaling_dict, self.steady_model(input_tensor)[:,0], "coef_a"), (-1,1))* tf.square(flow_tensor) + \
+                        tf.reshape(inv_scale_tf(self.scaling_dict, self.steady_model(input_tensor)[:,1], "coef_b"), (-1,1))* flow_tensor
         else:
             pred_dP = tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,0], "coef_a"), (-1,1)) * tf.square(flow_tensor) + \
             tf.reshape(inv_scale_tf(self.scaling_dict, pred_outlet_coefs[:,1], "coef_b"), (-1,1)) * flow_tensor
-
+        #import pdb; pdb.set_trace()
         #dP_loss = loss(pred_dP[::2]/1333, dP_tensor[::2]/1333)
         dP_loss = loss(pred_dP/1333, dP_tensor/1333)
         return dP_loss
+
+    def get_coef_loss(self, input_tensor, output_tensor, flow_tensor, flow_der_tensor, dP_tensor, loss):
+        pred_outlet_coefs = tf.cast(self.forward(input_tensor, output_tensor), dtype=tf.float64)
+        if self.unsteady and self.UO:
+            coef_loss = loss(pred_outlet_coefs, output_tensor)
+        elif self.unsteady:
+            coef_loss = loss(pred_outlet_coefs,tf.reshape(output_tensor[:,2], (-1,1)))
+        elif not self.unsteady:
+            coef_loss = loss(pred_outlet_coefs, output_tensor[:,0:2])
+        return coef_loss
 
     def get_quad_loss(self, output_tensor, flow_tensor, flow_der_tensor, dP_tensor, loss):
         #import pdb; pdb.set_trace()
         true_a = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,0], "coef_a"),(-1,1))
         true_b = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,1], "coef_b"),(-1,1))
 
-        if self.unsteady:
+        if self.unsteady and self.UO:
+            true_a = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,0], "coef_a_UO"),(-1,1))
+            true_b = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,1], "coef_b_UO"),(-1,1))
+            true_L = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,2], "coef_L_UO"),(-1,1))
+            dP_qfit = (true_a * flow_tensor**2) + (true_b * flow_tensor) + (true_L * flow_der_tensor)
+        elif self.unsteady:
             true_L = tf.reshape(inv_scale_tf(self.scaling_dict, output_tensor[:,2], "coef_L"),(-1,1))
             dP_qfit = (true_a * flow_tensor**2) + (true_b * flow_tensor) + (true_L * flow_der_tensor)
-        else:
+        elif not self.unsteady:
             dP_qfit = (true_a * flow_tensor**2) + (true_b * flow_tensor)
         quad_loss = loss(dP_qfit/1333, dP_tensor/1333)
         return quad_loss

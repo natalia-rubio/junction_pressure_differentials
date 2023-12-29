@@ -33,8 +33,13 @@ def loop_over(dataloader, gnn_model, output_name, loss, optimizer = None, unstea
         true_outlet_output = output_tensors[batch_ind]
         # print(f"True Coefficients {true_outlet_output[:2, :]}")
         # print(f"Predicted Coefficients {pred_outlet_output[:2, :]}")
-        coef_loss_value = loss(pred_outlet_output, true_outlet_output)
-        coef_loss = coef_loss + coef_loss_value.numpy()
+        coef_loss_value =  tf.math.sqrt(gnn_model.get_coef_loss(input_tensors[batch_ind],
+                            output_tensors[batch_ind],
+                            flow_tensors[batch_ind],
+                            flow_der_tensors[batch_ind],
+                            dP_tensors[batch_ind],
+                            loss))
+        coef_loss = coef_loss #+ coef_loss_value.numpy()
 
         dP_loss_value = tf.math.sqrt(gnn_model.get_dP_loss(input_tensors[batch_ind],
                             output_tensors[batch_ind],
@@ -234,4 +239,5 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
         samp75 = sort_inds[int(3*sort_inds.size/4)]
         print(f"Percentiles: {samp25}, {samp50}, {samp75}")
         print(f"RMSEs: {val_list[samp25]}, {val_list[samp50]}, {val_list[samp75]}")
+        #import pdb; pdb.set_trace()
     return gnn_model, val_mse, train_mse

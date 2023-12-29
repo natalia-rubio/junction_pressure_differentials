@@ -10,6 +10,8 @@ def extract_steady_flow_data(anatomy, geo, require4):
     dP_junc_lists = [[0],[0]]
 
     for i in range(4):
+        # if i == 1 or i ==3:
+        #     continue
         try:
             flow_result_dir = results_dir + f"flow_{i}_red_sol"
 
@@ -19,9 +21,9 @@ def extract_steady_flow_data(anatomy, geo, require4):
                 else:
                     continue
             soln_dict = load_dict(flow_result_dir)
-            print(geo); print(soln_dict)
 
             for outlet_ind in range(2):
+
                 flow_lists[outlet_ind] += [soln_dict["flow"][outlet_ind]]
                 dP_lists[outlet_ind] += [soln_dict["dp_end"][outlet_ind]]
                 dP_junc_lists[outlet_ind] += [soln_dict["dp_junc"][outlet_ind]]
@@ -34,17 +36,27 @@ def extract_unsteady_flow_data(anatomy, geo):
     unsteady_result_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/unsteady_red_sol"
     unsteady_soln_dict = load_dict(unsteady_result_dir)
 
-    posi_Q_ind = np.all(unsteady_soln_dict["flow_in_time"] > 0, axis = 1)
+    if anatomy[0:5] == "Aorta":
+        print("Aorta")
+        posi_Q_ind = np.all(unsteady_soln_dict["flow_in_time"] > 0, axis = 1)
+        unsteady_soln_dict["flow_in_time"] = unsteady_soln_dict["flow_in_time"][posi_Q_ind,:]
+        unsteady_soln_dict["pressure_in_time"] = unsteady_soln_dict["pressure_in_time"][posi_Q_ind,:]
+        unsteady_soln_dict["flow_in_time"] = unsteady_soln_dict["flow_in_time"][:80, :]
+        unsteady_soln_dict["pressure_in_time"] = unsteady_soln_dict["pressure_in_time"][:80, :]
+    if anatomy[0:5] == "Pulmo":
+        #import pdb; pdb.set_trace()
+        unsteady_soln_dict["flow_in_time"] = unsteady_soln_dict["flow_in_time"][105:-10, :]
+        unsteady_soln_dict["pressure_in_time"] = unsteady_soln_dict["pressure_in_time"][105:-10, :]
 
-    unsteady_soln_dict["flow_in_time"] = unsteady_soln_dict["flow_in_time"][posi_Q_ind,:]
-    unsteady_soln_dict["pressure_in_time"] = unsteady_soln_dict["pressure_in_time"][posi_Q_ind,:]
-
-    unsteady_soln_dict["flow_in_time"] = unsteady_soln_dict["flow_in_time"][:80, :]
-    unsteady_soln_dict["pressure_in_time"] = unsteady_soln_dict["pressure_in_time"][:80, :]
-
+        if np.any(unsteady_soln_dict["flow_in_time"]<0):
+            posi_Q_ind = np.all(unsteady_soln_dict["flow_in_time"] > 0, axis = 1)
+            print(posi_Q_ind)
+            import pdb; pdb.set_trace()
     dQdt_unsteady = (unsteady_soln_dict["flow_in_time"][1:,1:] - unsteady_soln_dict["flow_in_time"][:-1,1:])/0.002
     Q_unsteady = unsteady_soln_dict["flow_in_time"][1:,1:]
     dP_unsteady = unsteady_soln_dict["pressure_in_time"][1:, 1:] - unsteady_soln_dict["pressure_in_time"][1:, 0].reshape(-1, 1)
+    if np.max(dP_unsteady) < 10:
+        import pdb; pdb.set_trace()
 
     unsteady_flow_lists = [[0],[0]]
     unsteady_flow_der_lists = [[0],[0]]
@@ -54,12 +66,7 @@ def extract_unsteady_flow_data(anatomy, geo):
         unsteady_dP_lists[outlet_ind] = dP_unsteady[:, outlet_ind]
         unsteady_flow_lists[outlet_ind] = Q_unsteady[:, outlet_ind]
         unsteady_flow_der_lists[outlet_ind] = dQdt_unsteady[:, outlet_ind]
-
-    steady_flow_lists, steady_dP_lists, steady_dP_junc_lists = extract_steady_flow_data(anatomy, geo, require4 = False)
-    #
-    # steady_flow_der_lists = [[0 for i in flow_list] for flow_list in steady_flow_lists]
     return unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists
-    #return unsteady_flow_lists + steady_flow_lists, unsteady_flow_der_lists + steady_flow_der_lists, unsteady_dP_lists + steady_dP_lists
 
 
 
@@ -83,12 +90,12 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
 
     home_dir = os.path.expanduser("~")
     geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}"); geos.sort(); print(geos)
-
+    plt.clf()
     for j, geo in enumerate(geos[0:]):
 
         try:
+            #import pdb; pdb.set_trace()
             junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{geo}/junction_params_dict")
-            print(junction_params)
 
             flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, geo, require4)
 
@@ -98,18 +105,18 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
             if unsteady:
                 try:
                     unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, geo)
+                    char_val_dict["unsteady_flow_list"] += unsteady_flow_lists
+                    char_val_dict["unsteady_flow_der_list"] += unsteady_flow_der_lists
+                    char_val_dict["unsteady_dP_list"] += unsteady_dP_lists
                 except:
                     continue
-
+            print(flow_lists, dP_lists)
             char_val_dict["flow_list"] += flow_lists
             char_val_dict["dP_list"] += dP_lists
             char_val_dict["dP_junc_list"] += dP_junc_lists
 
-            if unsteady:
-                unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, geo)
-                char_val_dict["unsteady_flow_list"] += unsteady_flow_lists
-                char_val_dict["unsteady_flow_der_list"] += unsteady_flow_der_lists
-                char_val_dict["unsteady_dP_list"] += unsteady_dP_lists
+
+
 
             results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/flow_1_red_sol"
             soln_dict = load_dict(results_dir)
@@ -129,6 +136,8 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
         except:
             print(f"Problem extracting junction data.  Skipping {geo}.")
             continue
+
+    #import pdb; pdb.set_trace()
 
 
     save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")

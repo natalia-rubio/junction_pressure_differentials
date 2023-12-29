@@ -8,10 +8,10 @@ def assemble_graphs(anatomy, unsteady = False):
     graph_list = []
 
     char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
-    if unsteady:
-        scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
-    else:
-        scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict_steady")
+    # if unsteady:
+    #     scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
+    # else:
+    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
 
     for i in range(int(len(char_val_dict["inlet_radius"])/2)):
 
@@ -23,9 +23,6 @@ def assemble_graphs(anatomy, unsteady = False):
                                 scale(scaling_dict, np.asarray(char_val_dict["outlet_length"][2*i: 2*(i+1)]), "outlet_length"),
                                 scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i: 2*(i+1)]), "angle")
                                 )).T
-
-        # outlet_data = np.asarray([scale(scaling_dict, char_val_dict["coef_a"][2*i: 2*(i+1)], "coef_a"),
-        #                         scale(scaling_dict, char_val_dict["coef_b"][2*i: 2*(i+1)], "coef_b")]).T
 
         outlet_flows = np.stack((np.asarray(char_val_dict["flow_list"][2*i]).T,
                                 np.asarray(char_val_dict["flow_list"][2*i + 1]).T))
@@ -50,6 +47,10 @@ def assemble_graphs(anatomy, unsteady = False):
             outlet_coefs = np.asarray([scale(scaling_dict, char_val_dict["coef_a"][2*i: 2*(i+1)], "coef_a"),
                                     scale(scaling_dict, char_val_dict["coef_b"][2*i: 2*(i+1)], "coef_b"),
                                     scale(scaling_dict, char_val_dict["coef_L"][2*i: 2*(i+1)], "coef_L")]).T
+
+            outlet_coefs_UO = np.asarray([scale(scaling_dict, char_val_dict["coef_a_UO"][2*i: 2*(i+1)], "coef_a_UO"),
+                                    scale(scaling_dict, char_val_dict["coef_b_UO"][2*i: 2*(i+1)], "coef_b_UO"),
+                                    scale(scaling_dict, char_val_dict["coef_L_UO"][2*i: 2*(i+1)], "coef_L_UO")]).T
 
 
         else:
@@ -78,13 +79,17 @@ def assemble_graphs(anatomy, unsteady = False):
 
 
             if unsteady:
+                graph.nodes["outlet"].data["outlet_coefs_UO"] = tf.convert_to_tensor(outlet_coefs_UO, dtype=tf.float64)
                 graph.nodes["outlet"].data["unsteady_outlet_flows"] = tf.convert_to_tensor(unsteady_outlet_flows, dtype=tf.float32)
                 graph.nodes["outlet"].data["unsteady_outlet_flow_ders"] = tf.convert_to_tensor(unsteady_outlet_flow_ders, dtype=tf.float32)
                 graph.nodes["outlet"].data["unsteady_outlet_dP"] = tf.convert_to_tensor(unsteady_outlet_dPs, dtype=tf.float32)
 
         graph_list.append(graph)
+        #print(graph.nodes["inlet"])
+        #pdb.set_trace()
     if unsteady:
         dgl.save_graphs(f"data/graph_lists/{anatomy}_graph_list", graph_list)
+
     else:
         dgl.save_graphs(f"data/graph_lists/{anatomy}_graph_list_steady", graph_list)
     return graph

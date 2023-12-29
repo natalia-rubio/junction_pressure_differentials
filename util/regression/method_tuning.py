@@ -21,8 +21,8 @@ ray.init(
     num_cpus=1,
     num_gpus=3,
 )
-anatomy = "Aorta_rand"; num_geos_steady = 110; num_geos_unsteady = 110
-
+#anatomy = "Aorta_rand"; num_geos_steady = 110; num_geos_unsteady = 110
+anatomy = "Pulmo_rand"; num_geos_steady = 123; num_geos_unsteady = 123
 
 def objective_dt(config):
     print(config)

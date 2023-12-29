@@ -25,7 +25,7 @@ def construct_model(model_name, segmentations, geo_params):
     #tmp = model.get_polydata()
     smooth_model = model.get_polydata()
     smoothing_params = {'method':'constrained', 'num_iterations':30}
-    smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, radius = 1, center = [0, 0.2, 0], smoothing_parameters = smoothing_params)
+    smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, radius = 1, center = [0, 0, 0], smoothing_parameters = smoothing_params)
     # [=== Combine faces ===]
     #
     model.set_surface(smooth_model)

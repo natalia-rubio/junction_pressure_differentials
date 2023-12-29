@@ -11,10 +11,11 @@ unsteady_text = sys.argv[2] #alse
 unsteady = False
 if unsteady_text == "unsteady":
     unsteady = True
-collect_synthetic_results(anatomy = anatomy, require4 = False, unsteady = unsteady)
+print(f"Unsteady: {unsteady}")
+collect_synthetic_results(anatomy = anatomy, require4 =False, unsteady = unsteady)
 print("Extracted simulation results.")
 
-get_coefs(anatomy = anatomy, rm_low_r2 = False, unsteady = unsteady)
+get_coefs(anatomy = anatomy, rm_low_r2 = True, unsteady = unsteady)
 print("Fitted dP(Q) coefficients.")
 
 get_geo_scalings(anatomy, unsteady = unsteady)

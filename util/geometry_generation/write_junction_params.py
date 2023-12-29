@@ -3,7 +3,7 @@ sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 
 def get_random(stats_list):
-    return stats_list[0] + (0.4 + 0.2 * np.random.default_rng(seed=None).random()) * (stats_list[1]-stats_list[0])
+    return stats_list[0] + (0.4 + 0.2 * np.random.default_rng(seed=0).random()) * (stats_list[1]-stats_list[0])
 
 def get_mean(stats_list):
     return stats_list[0] + 0.5 * (stats_list[1]-stats_list[0])
@@ -505,5 +505,6 @@ if __name__ == '__main__':
     # write_anatomy_junctions(anatomy = "Aorta_rand", start = 0, num_junctions = 200)
     # write_mynard_junctions_rand(num_junctions = 200)
     #write_anatomy_junctions(anatomy = "Pulmo_rand", start = 0, num_junctions = 150)
-    #print_mynard_ranges()
+    print_mynard_ranges()
     print_pulmo_ranges()
+    print_aorta_ranges()

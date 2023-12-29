@@ -104,6 +104,10 @@ def get_master_tensors_steady(dataloader):
     output1 = tf.cast(g.nodes['outlet'].data['outlet_coefs'][:,0:2], dtype=tf.float64)[::2,:]
     output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'][:,0:2], dtype=tf.float64)[1::2,:]
     output = tf.concat((output1, output2), axis = 0)
+    #
+    # output1_UO = tf.cast(g.nodes['outlet'].data['outlet_coefs_UO'][:,0:2], dtype=tf.float64)[::2,:]
+    # output2_UO = tf.cast(g.nodes['outlet'].data['outlet_coefs_UO'][:,0:2], dtype=tf.float64)[1::2,:]
+    # output_UO = tf.concat((output1_UO, output2_UO), axis = 0)
 
     flow1 = tf.cast(g.nodes['outlet'].data['outlet_flows'], dtype=tf.float64)[::2,:]
     flow2 = tf.cast(g.nodes['outlet'].data['outlet_flows'], dtype=tf.float64)[1::2,:]
@@ -113,7 +117,8 @@ def get_master_tensors_steady(dataloader):
     dP2 = tf.cast(g.nodes['outlet'].data['outlet_dP'], dtype=tf.float64)[1::2,:]
     dP= tf.concat((dP1, dP2), axis = 0)
     #import pdb; pdb.set_trace()
-    return (input, output, flow, None, dP)
+    #print(input); import pdb; pdb.set_trace()
+    return (input, output, flow, None, dP, None)
 
 def get_master_tensors_unsteady(dataloader):
     g = dataloader[0]
@@ -129,6 +134,10 @@ def get_master_tensors_unsteady(dataloader):
     output2 = tf.cast(g.nodes['outlet'].data['outlet_coefs'], dtype=tf.float64)[1::2,:]
     output = tf.concat((output1, output2), axis = 0)
 
+    output1_UO = tf.cast(g.nodes['outlet'].data['outlet_coefs_UO'], dtype=tf.float64)[::2,:]
+    output2_UO = tf.cast(g.nodes['outlet'].data['outlet_coefs_UO'], dtype=tf.float64)[1::2,:]
+    output_UO = tf.concat((output1_UO, output2_UO), axis = 0)
+
     flow1 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flows'], dtype=tf.float64)[::2,:]
     flow2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_flows'], dtype=tf.float64)[1::2,:]
     flow = tf.concat((flow1, flow2), axis = 0)
@@ -141,7 +150,7 @@ def get_master_tensors_unsteady(dataloader):
     dP2 = tf.cast(g.nodes['outlet'].data['unsteady_outlet_dP'], dtype=tf.float64)[1::2,:]
     dP= tf.concat((dP1, dP2), axis = 0)
     #import pdb; pdb.set_trace()
-    return (input, output, flow, flow_der, dP)
+    return (input, output, flow, flow_der, dP, output_UO)
 
 def get_noise(input_tensor, noise_level):
 
@@ -157,6 +166,7 @@ def get_batched_tensors_unsteady(master_tensors, batch_size, noise_level):
     flow_tensor_data_loader = []
     flow_der_tensor_data_loader = []
     dP_tensor_data_loader = []
+    output_UO_tensor_data_loader = []
     num_samples = master_tensors[0].shape[0]; num_batches = int(np.ceil(num_samples/batch_size))
     #print(f"num batches: {num_batches}.  num graphs: {num_samples}.")
     indices_shuff = [int(i) for i in range(num_samples)]
@@ -169,11 +179,12 @@ def get_batched_tensors_unsteady(master_tensors, batch_size, noise_level):
 
         input_tensor_data_loader.append(tf.gather(master_tensors[0], batch_indices, axis = 0))
         output_tensor_data_loader.append(tf.gather(master_tensors[1] + get_noise(master_tensors[1], noise_level), batch_indices, axis = 0))
+        output_UO_tensor_data_loader.append(tf.gather(master_tensors[5] + get_noise(master_tensors[5], noise_level), batch_indices, axis = 0))
         flow_tensor_data_loader.append(tf.gather(master_tensors[2], batch_indices, axis = 0))
         flow_der_tensor_data_loader.append(tf.gather(master_tensors[3], batch_indices, axis = 0))
         dP_tensor_data_loader.append(tf.gather(master_tensors[4], batch_indices, axis = 0))
 
-    return (input_tensor_data_loader, output_tensor_data_loader, flow_tensor_data_loader, flow_der_tensor_data_loader, dP_tensor_data_loader)
+    return (input_tensor_data_loader, output_tensor_data_loader, flow_tensor_data_loader, flow_der_tensor_data_loader, dP_tensor_data_loader, output_UO_tensor_data_loader)
 
 def get_batched_tensors_steady(master_tensors, batch_size, noise_level):
     input_tensor_data_loader = []
@@ -181,6 +192,7 @@ def get_batched_tensors_steady(master_tensors, batch_size, noise_level):
     flow_tensor_data_loader = []
     flow_der_tensor_data_loader = []
     dP_tensor_data_loader = []
+    output_UO_tensor_data_loader = []
     num_samples = master_tensors[0].shape[0]; num_batches = int(np.ceil(num_samples/batch_size))
     #print(f"num batches: {num_batches}.  num graphs: {num_samples}.")
     indices_shuff = [int(i) for i in range(num_samples)]
@@ -197,8 +209,9 @@ def get_batched_tensors_steady(master_tensors, batch_size, noise_level):
 
         input_tensor_data_loader.append(tf.gather(master_tensors[0], batch_indices, axis = 0))
         output_tensor_data_loader.append(tf.gather(master_tensors[1] + get_noise(master_tensors[1], noise_level), batch_indices, axis = 0))
+        output_UO_tensor_data_loader.append(None)
         flow_tensor_data_loader.append(tf.gather(master_tensors[2], batch_indices, axis = 0))
         flow_der_tensor_data_loader.append(None)
         dP_tensor_data_loader.append(tf.gather(master_tensors[4], batch_indices, axis = 0))
 
-    return (input_tensor_data_loader, output_tensor_data_loader, flow_tensor_data_loader, flow_der_tensor_data_loader, dP_tensor_data_loader)
+    return (input_tensor_data_loader, output_tensor_data_loader, flow_tensor_data_loader, flow_der_tensor_data_loader, dP_tensor_data_loader, output_UO_tensor_data_loader)

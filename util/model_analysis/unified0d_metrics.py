@@ -58,7 +58,7 @@ anatomy = sys.argv[1];
 if anatomy == "Aorta_rand":
     num_geos_steady = 110; num_geos_unsteady = 110
 elif anatomy == "Pulmo_rand":
-        num_geos_steady = 127; num_geos_unsteady = 127
+        num_geos_steady = 123; num_geos_unsteady = 123
 elif anatomy == "mynard_rand":
         num_geos_steady = 187; num_geos_unsteady = 127
 print("Validation")

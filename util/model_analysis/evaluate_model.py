@@ -26,22 +26,23 @@ def vary_param(anatomy, variable, dP_type):
     plt.clf()
 
     if anatomy == "mynard":
-        model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_500_seed_0_geos_187"#mynard
+        #model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_187_dP"
+        model_name = "1_hl_70_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_187"#mynard
         char_val_dict = load_dict(f"data/characteristic_value_dictionaries/mynard_vary_rout_synthetic_data_dict")
-        scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
+        scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict")
 
     elif anatomy == "Aorta":
-        model_name = "1_hl_48_lsmlp_0_018_lr_0_031_lrd_1e-05_wd_bs_24_nepochs_1000_seed_0_geos_110"#aorta
+        model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_110_dP"#aorta
         char_val_dict = load_dict(f"data/characteristic_value_dictionaries/Aorta_vary_rout_synthetic_data_dict")
-        scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_rand_scaling_dict_steady")
+        scaling_dict = load_dict(f"data/scaling_dictionaries/Aorta_rand_scaling_dict")
 
     elif anatomy == "Pulmo":
-        model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_127"
+        model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_123_dP"
         char_val_dict = load_dict(f"data/characteristic_value_dictionaries/Pulmo_vary_rout_synthetic_data_dict")
-        scaling_dict = load_dict(f"data/scaling_dictionaries/Pulmo_rand_scaling_dict_steady")
+        scaling_dict = load_dict(f"data/scaling_dictionaries/Pulmo_rand_scaling_dict")
 
-    nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name, compile=True)
-
+    nn_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name+"_steady", compile=True)
+    #print(nn_model.get_config())
     dPs = []
     for i in reversed(range(int(len(char_val_dict["name"])/2))):
 
@@ -51,6 +52,7 @@ def vary_param(anatomy, variable, dP_type):
             outlet_ind = 0
         print(outlet_ind)
 
+        #print(char_val_dict)
         inlet_data = np.stack((scale(scaling_dict, char_val_dict["inlet_area"][2*i], "inlet_area").reshape(1,-1),
                                 scale(scaling_dict, char_val_dict["inlet_length"][2*i], "inlet_length").reshape(1,-1),
                                 )).T
@@ -95,7 +97,7 @@ def vary_param(anatomy, variable, dP_type):
         #print(graph.nodes["outlet"].data)
 
         master_tensor = get_master_tensors_steady([graph])
-        input_tensor = master_tensor[0]
+        input_tensor = master_tensor[0]; print(input_tensor)
         flow_tensor = master_tensor[2]
         dP = master_tensor[4]
 
@@ -104,7 +106,7 @@ def vary_param(anatomy, variable, dP_type):
                             + tf.linspace(flow_tensor[1,0], flow_tensor[1,-1], 100)
 
         pred_outlet_coefs = tf.cast(nn_model.predict(input_tensor), dtype=tf.float64)
-
+        #print(pred_outlet_coefs); pdb.set_trace()
         pred_dP = tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,0], "coef_a"), (-1,1)) * tf.square(flow_tensor_cont) + \
                     tf.reshape(inv_scale_tf(scaling_dict, pred_outlet_coefs[outlet_ind,1], "coef_b"), (-1,1)) * flow_tensor_cont
 

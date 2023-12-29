@@ -155,7 +155,7 @@ if __name__ == "__main__":
     #launch_anatomy_geo_sweep(anatomy = "Aorta_rand", num_geos = 200, anatomy_type = "Aorta")
     #write_pipe()
     #launch_mesh_sweep(anatomy = "mynard_vary_mesh", num_geos = 4, anatomy_type = "mynard")
-    launch_mesh_sweep(anatomy = "Pulmo_vary_rout", num_geos = 3, anatomy_type = "Pulmo")
+    #launch_mesh_sweep(anatomy = "Pulmo_vary_rout", num_geos = 3, anatomy_type = "Pulmo")
     launch_anatomy_geo_sweep(anatomy = "Pulmo_rand", num_geos = 150, anatomy_type = "Pulmo")
 
 # USE THIS COMMAND TO RUN WITH SIMVASCULAR:

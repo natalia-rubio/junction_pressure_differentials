@@ -1,0 +1,13 @@
+Failure # 1 (occurred at 2023-12-26_19-46-22)
+[36mray::ImplicitFunc.train()[39m (pid=22875, ip=171.65.93.126, actor_id=ffb4ef4a7720831eb598c3ca01000000, repr=objective)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/trainable.py", line 400, in train
+    raise skipped from exception_cause(skipped)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/air/_internal/util.py", line 91, in run
+    self._ret = self._target(*self._args, **self._kwargs)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/function_trainable.py", line 383, in <lambda>
+    training_func=lambda: self._trainable_func(self.config),
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/function_trainable.py", line 822, in _trainable_func
+    output = fn()
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/neural_network/nn_opt.py", line 22, in objective
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "Aorta_rand", num_geos = 110,  seed = 0, unsteady = True, unsteady_opt = False, config = config)
+TypeError: train_and_val_gnn() got an unexpected keyword argument 'seed'

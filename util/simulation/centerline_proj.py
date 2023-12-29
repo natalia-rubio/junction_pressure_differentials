@@ -132,8 +132,8 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True):
     inlet_locs = (points[inlet_pts])[np.argsort(pt_id[inlet_pts])]
     inlet_length = get_length(inlet_locs[offset:])
     area_inlet = (soln_array["area"][inlet_pts])[np.argsort(pt_id[inlet_pts])][offset]
-    q_inlet = (soln_array["velocity_01000"][inlet_pts])[np.argsort(pt_id[inlet_pts])][offset]
-    p_inlet = (soln_array["pressure_01000"][inlet_pts])[np.argsort(pt_id[inlet_pts])] + 0.5*1.06*np.square(q_inlet/area_inlet)
+    q_inlet = (soln_array["velocity_00200"][inlet_pts])[np.argsort(pt_id[inlet_pts])][offset]
+    p_inlet = (soln_array["pressure_00200"][inlet_pts])[np.argsort(pt_id[inlet_pts])] + 0.5*1.06*np.square(q_inlet/area_inlet)
     p_end_inlet = p_inlet[offset]
 
     inlet_inds = np.linspace(0, len(p_inlet), len(p_inlet))
@@ -143,8 +143,8 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True):
     outlet1_length = get_length(outlet1_locs[:-offset])
 
     area_outlet1 = (soln_array["area"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])][-offset]
-    q_outlet1 = (soln_array["velocity_01000"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])][-offset]
-    p_outlet1 = (soln_array["pressure_01000"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])] + 0.5*1.06*np.square(q_outlet1/area_outlet1)
+    q_outlet1 = (soln_array["velocity_00200"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])][-offset]
+    p_outlet1 = (soln_array["pressure_00200"][outlet1_pts])[np.argsort(pt_id[outlet1_pts])] + 0.5*1.06*np.square(q_outlet1/area_outlet1)
     p_end_outlet1 = p_outlet1[-offset]
     print("Inlet flow")
     print(q_inlet)
@@ -156,8 +156,8 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True):
 
 
     area_outlet2 = (soln_array["area"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])][-offset]
-    q_outlet2 = (soln_array["velocity_01000"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])][-offset]
-    p_outlet2 = (soln_array["pressure_01000"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])] + 0.5*1.06*np.square(q_outlet2/area_outlet2)
+    q_outlet2 = (soln_array["velocity_00200"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])][-offset]
+    p_outlet2 = (soln_array["pressure_00200"][outlet2_pts])[np.argsort(pt_id[outlet2_pts])] + 0.5*1.06*np.square(q_outlet2/area_outlet2)
     p_end_outlet2 = p_outlet2[-offset]
     outlet2_inds = np.linspace(len(p_inlet), len(p_inlet)+len(p_outlet2), len(p_outlet2))
 
@@ -250,12 +250,12 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True):
     save_dict(soln_dict, f"data/synthetic_junctions_reduced_results/{anatomy}/{geometry}/flow_{flow}_red_sol")
     return
 
-anatomies = ["Aorta_vary_rout"]#["mynard_vary_mesh_red_ts", "Aorta_vary_rout"]
+anatomies = ["Pulmo_vary_rout"]#["mynard_vary_mesh_red_ts", "Aorta_vary_rout"]
 
 for anatomy in anatomies:
     geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}")
     for geometry in geos:
-        for flow in ["1",]:
+        for flow in ["1","3"]:
 
             fpath_1d = f"data/synthetic_junctions/{anatomy}/{geometry}/centerlines/centerline.vtp"
             fpath_3d = f"data/synthetic_junctions/{anatomy}/{geometry}/flow_{flow}/solution_flow_{flow}.vtu"

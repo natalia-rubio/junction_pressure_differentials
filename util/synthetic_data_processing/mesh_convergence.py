@@ -30,17 +30,25 @@ def vary_param(anatomy, variable):
     scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
     dPs = []
     marker_list = ["o", "v", "s", "d", "X", "*"]
+
+    if anatomy[0:5] == "Aorta":
+        ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
+    elif anatomy[0:5] == "Pulmo":
+        ref_list = ["6.4E4 cells", "9.3E4 cells", "1.6E5 cells", "2.5E5 cells", "5.1E5 cells" , "9.1E5 cells"]
+    elif anatomy[0:5] == "mynar":
+        ref_list = ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
     #ref_list = ["6.1E5 elements","3.3E5 elements","1.7E5 elements", "9.9E5 elements"]
     #ref_list = ["1.3E5 cells", "1.6E5 cells", "3.5E5 cells", "6.9E5 cells", "1.5E6 cells", "1.9E6 cells"]# ["1", "2", "3", "4", "5"]
     #ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
-    ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
+    #ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
+    #ref_list = ["6.4E4 cells", "9.3E4 cells", "1.6E5 cells", "2.5E5 cells", "5.1E5 cells" , "9.1E5 cells"]
     re_max = 0
 
-    for i in range(6):#int(len(char_val_dict["name"])/2)):
+    for i in range(int(len(char_val_dict["name"])/2)):
         print(char_val_dict["name"][2*i])
         outlet_ind = 1
         if char_val_dict["outlet_area"][2*i] < char_val_dict["outlet_area"][2*i +1 ]:
-            outlet_ind = 0
+            outlet_ind = 1
         # if i/int(len(char_val_dict["name"])/2) < 0.5:
         #     outlet_ind = 1
         # else:
@@ -51,7 +59,7 @@ def vary_param(anatomy, variable):
         #     outlet_ind = 1
         # else:
         #     outlet_ind = 0
-        # #print(outlet_ind)
+        print(outlet_ind)
 
         inlet_data = np.stack((scale(scaling_dict, char_val_dict["inlet_area"][2*i], "inlet_area").reshape(1,-1),
                                 )).T
@@ -101,7 +109,7 @@ def vary_param(anatomy, variable):
         print(flow_tensor)
 
         plt.scatter(np.asarray(flow_tensor)[outlet_ind,:], np.asarray(dP)[outlet_ind,:]/1333, facecolors='none', edgecolors = color, marker = marker_list[i], s = 50, label = f"{ref_list[i]} mesh elements")
-        re_max = max(re_max, get_re(inlet_flow = np.max(np.asarray(flow_tensor)[0,:]), inlet_radius = char_val_dict["outlet_radius"][2*i]))
+        re_max = max(re_max, get_re(inlet_flow = np.max(np.asarray(flow_tensor)[outlet_ind,:]), inlet_radius = char_val_dict["outlet_radius"][2*i+outlet_ind]))
 
     flow_tensor_cont = tf.linspace(flow_tensor[outlet_ind,0], flow_tensor[outlet_ind,-1], 100)
     inflow_tensor_cont =  tf.linspace(flow_tensor[0,0], flow_tensor[0,-1], 100) \
@@ -122,11 +130,12 @@ def vary_param(anatomy, variable):
     # dP_mynard = np.asarray(dP_mynard_list)
     #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", linewidth=2, color = color, label = "Unified0D+")
 
-    plt.xlabel("$Q \;  (\mathrm{cm^3/s})$" + f"    (Max Re {int(re_max)})")
+    plt.xlabel("$Q \;  (\mathrm{cm^3/s})$" + f"    (Outlet Re {int(re_max)})")
     plt.ylabel("$\Delta P$ (mmHg)")
     plt.legend(fontsize="12", bbox_to_anchor=(1.05, 1.0), loc='upper left')
     plt.savefig(f"results/mesh_convergence/mesh_refinement_study_{anatomy}.pdf", bbox_inches='tight', format = "pdf")
     return
 
-vary_param("Pulmo_vary_mesh", "rout")
+anatomy = sys.argv[1]
+vary_param(anatomy, "rout")
 #vary_param("Aorta_vary_angle", "angle")

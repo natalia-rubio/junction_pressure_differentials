@@ -28,6 +28,7 @@ class DGL_Dataset(DGLDataset):
 
 def generate_train_val_datasets(anatomy, dataset_params = {}, unsteady = True):
     seed = 0
+    print(unsteady)
     if unsteady:
         graph_list = dgl.load_graphs(f"data/graph_lists/{anatomy}_graph_list")[0]; graph_arr = np.array(graph_list, dtype = "object")
     else:
@@ -41,7 +42,7 @@ def generate_train_val_datasets(anatomy, dataset_params = {}, unsteady = True):
     train_graph_list =  graph_arr[train_ind]
     val_graph_list =  graph_arr[val_ind]
     print(f"train geos: {train_geos} \nval geos: {val_geos}")
-
+    print(train_graph_list[0].nodes["inlet"])
     assert len(list(set(train_graph_list).intersection(val_graph_list))) == 0, "Common geometries between train and val sets."
 
     train_dataset = DGL_Dataset(list(graph_arr[train_ind]))

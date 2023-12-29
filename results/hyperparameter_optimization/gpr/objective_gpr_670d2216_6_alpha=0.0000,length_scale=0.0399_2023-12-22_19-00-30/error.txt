@@ -1,0 +1,17 @@
+Failure # 1 (occurred at 2023-12-22_19-00-36)
+[36mray::ImplicitFunc.train()[39m (pid=5383, ip=171.65.93.126, actor_id=f9842c9a318626cc43fc766a01000000, repr=objective_gpr)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/trainable.py", line 400, in train
+    raise skipped from exception_cause(skipped)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/air/_internal/util.py", line 91, in run
+    self._ret = self._target(*self._args, **self._kwargs)
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/function_trainable.py", line 383, in <lambda>
+    training_func=lambda: self._trainable_func(self.config),
+  File "/home/nrubio/anaconda3/envs/tf-gpu-cuda10/lib/python3.9/site-packages/ray/tune/trainable/function_trainable.py", line 822, in _trainable_func
+    output = fn()
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/method_tuning.py", line 54, in objective_gpr
+    reg_steady, dP_loss_val_steady, dP_loss_train_steady = train_gpr_model_steady(anatomy, num_geos_steady, seed = 0, hyperparams = config)
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/gpr.py", line 10, in train_gpr_model_steady
+    scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_scaling_dict")
+  File "/home/nrubio/Desktop/junction_pressure_differentials/util/regression/neural_network/training_util.py", line 28, in load_dict
+    f = open(dir, "rb"); scaling_dict = pickle.load(f)
+FileNotFoundError: [Errno 2] No such file or directory: '/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/Pulmo_rands_scaling_dict'
