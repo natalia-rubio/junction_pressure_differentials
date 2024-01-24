@@ -17,7 +17,7 @@ def dP_poiseuille(flow, radius, length):
 
 def plot_unsteady(anatomy):
 
-    pulmo_graph_list_name = f"data/graph_lists/Pulmo_vary_rout/val_Pulmo_vary_rout_num_geos_3_seed_0_graph_list"
+    pulmo_graph_list_name = f"data/graph_lists/Pulmo_rand/val_Pulmo_rand_num_geos_130_seed_0_graph_list"
 
     if anatomy == "Pulmo":
         #model_name = pulmo_model_name
@@ -51,7 +51,7 @@ def plot_unsteady(anatomy):
         dP_tensor = master_tensor[4][0,:]
 
         #ax.scatter(np.asarray(flow_tensor)[0:40], np.asarray(dP_tensor)[0:40]/1333, label = "Simulation", c = "seagreen", marker = "*", s = 70)
-        ax.scatter(np.asarray(flow_tensor)[40:], np.asarray(dP_tensor)[40:]/1333, label = "Simulation", c = "salmon", marker = "*", s = 70)
+        ax.scatter(np.asarray(flow_tensor)[0:], np.asarray(dP_tensor)[0:]/1333, label = "Simulation", c = "salmon", marker = "*", s = 70)
 
     #fig.subplots_adjust(hspace=0.1)
     fig.text(0.5, -0.02, "$Q \;  (\mathrm{cm^3/s})$", ha = "center")

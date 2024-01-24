@@ -46,7 +46,7 @@ def extract_unsteady_flow_data(anatomy, geo):
     if anatomy[0:5] == "Pulmo":
         #import pdb; pdb.set_trace()
         unsteady_soln_dict["flow_in_time"] = unsteady_soln_dict["flow_in_time"][105:-10, :]
-        unsteady_soln_dict["pressure_in_time"] = unsteady_soln_dict["pressure_in_time"][105:-10, :]
+        unsteady_soln_dict["pressure_in_time"] = unsteady_soln_dict["pressure_in_time"][105:-10,:]#[105:-10, :]
 
         if np.any(unsteady_soln_dict["flow_in_time"]<0):
             posi_Q_ind = np.all(unsteady_soln_dict["flow_in_time"] > 0, axis = 1)
