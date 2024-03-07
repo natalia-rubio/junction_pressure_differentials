@@ -12,23 +12,27 @@ from util.geometry_generation.meshing_helpers import *
 import copy
 
 def construct_model(model_name, segmentations, geo_params):
-
+    center_shift = geo_params["outlet2_radius"] * np.cos(geo_params["angle2"] * np.pi/180)
     contour_list = segmentations
     capped_vessels = create_vessels(contour_list=contour_list)
     #unioned_model = capped_vessels[0]#
     unioned_model = union_all(capped_vessels)
     #unioned_model.write("junction_model_union", "vtp")
     model = clean(unioned_model)
-    #model.write("junction_model_cleaned", "vtp")
+    model.write("junction_model_cleaned", "vtp")
     model = norm(model)
-    #model.write("junction_model_normed", "vtp")
+    model.write("junction_model_normed", "vtp")
     #tmp = model.get_polydata()
     smooth_model = model.get_polydata()
-    smoothing_params = {'method':'constrained', 'num_iterations':30}
-    smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, radius = 1, center = [0, 0, 0], smoothing_parameters = smoothing_params)
+    #smoothing_params = {'method':'constrained', 'num_iterations':100}
+    smoothing_params = {'method':'constrained', 'num_iterations':100, 'constrain_factor':0.7, 'num_cg_solves':30}
+    smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, 
+                                                   radius = 4*geo_params["outlet1_radius"], 
+                                                   center = [0, center_shift, 0], 
+                                                   smoothing_parameters = smoothing_params)
     # [=== Combine faces ===]
     #
-    model.set_surface(smooth_model)
+    #model.set_surface(smooth_model)
     print("Surface set.")
     model.compute_boundary_faces(85)
     model, walls, caps, ids = combine_walls(model)
@@ -38,8 +42,15 @@ def construct_model(model_name, segmentations, geo_params):
 
     return model
 
-def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3, sphere_ref = 0.1, sphere_offset = 0):
+def get_mesh(model_name, model, geo_params, anatomy, set_type, mesh_divs, sphere_ref):
+    center_shift = geo_params["outlet2_radius"] * np.cos(geo_params["angle2"] * np.pi/180)
+    #mesh_divs = 3
+    sphere_ref = 0.5
+    sphere_offset = 0
+    print("Mesh divs:", mesh_divs)
+
     edge_size = geo_params["outlet2_radius"]/mesh_divs #geo_params["outlet2_radius"]/500
+    print("Edge size: ", edge_size)
     caps = model.identify_caps()
     ids = model.get_face_ids()
     walls = [ids[i] for i,x in enumerate(caps) if not x]
@@ -60,7 +71,8 @@ def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3, sphere_ref =
     options = sv.meshing.TetGenOptions(global_edge_size = edge_size, surface_mesh_flag=True, volume_mesh_flag=True)
 
     #
-    options.sphere_refinement.append({'edge_size':edge_size*sphere_ref, 'radius':1, 'center':[0, sphere_offset, 0]})
+    options.sphere_refinement.append({'edge_size':edge_size*sphere_ref, 'radius':4*geo_params["outlet1_radius"], 
+                                      'center':[0, center_shift, 0]})
     options.sphere_refinement_on = True
 
     #options.boundary_layer_inside = True
@@ -77,13 +89,13 @@ def get_mesh(model_name, model, geo_params, anatomy, mesh_divs = 3, sphere_ref =
     mesher.generate_mesh(options)
 
     msh = mesher.get_mesh()
-    generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, faces, anatomy, mesh_divs)
+    generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, faces, anatomy, set_type)
     return msh, model
 
-def generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, faces, anatomy, mesh_divs):
+def generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, faces, anatomy, set_type):
     print("Generating mesh complete folder. \n")
     home_dir = os.path.expanduser("~")
-    dir = "data/synthetic_junctions/" + anatomy + "/" + model_name
+    dir = "data/synthetic_junctions/" + anatomy + "/" + set_type + "/" + model_name
 
     if not os.path.exists(dir):
         os.mkdir(dir)
@@ -120,5 +132,4 @@ def generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, f
     cent_solid.set_surface(cent)
     print("Centerline surface set.")
     cent_solid.write(dir +  '/centerlines/centerline', "vtp")
-
     return

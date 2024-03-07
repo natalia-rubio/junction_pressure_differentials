@@ -39,6 +39,8 @@ def generate_mean_params(anatomy):
     # angles
     param_dict["angle1"] = (params_stat_dict["angle"][0] + params_stat_dict["angle"][1])/2
     param_dict["angle2"] = (params_stat_dict["angle"][0] + params_stat_dict["angle"][1])/2
+
+    param_dict["inlet_velocity"] = 180
     return param_dict
 
 def generate_random_params(anatomy):
@@ -63,6 +65,8 @@ def generate_random_params(anatomy):
     # angles
     param_dict["angle1"] = np.random.uniform(low = params_stat_dict["angle"][0], high = params_stat_dict["angle"][1])
     param_dict["angle2"] = np.random.uniform(low = params_stat_dict["angle"][0], high = params_stat_dict["angle"][1])
+
+    param_dict["inlet_velocity"] = 180
     return param_dict
 
 def write_anatomy_junctions(anatomy, set_type, num_junctions):
@@ -76,7 +80,7 @@ def write_anatomy_junctions(anatomy, set_type, num_junctions):
 
     for i in range(num_junctions):
         junction_name = f"{anatomy[0:2]}_{format(int(i), '03d')}"
-        if os.path.exists(f"data/synthetic_junctions/{anatomy}/{set_type}/{junction_name}/vessel_params_dict") == False:
+        if os.path.exists(f"data/synthetic_junctions/{anatomy}/{set_type}/{junction_name}/junction_params_dict") == False:
                 if not os.path.exists(f"data/synthetic_junctions/{anatomy}/{set_type}/{junction_name}"):
                     os.mkdir(f"data/synthetic_junctions/{anatomy}/{set_type}/{junction_name}")
 
@@ -87,7 +91,7 @@ def write_anatomy_junctions(anatomy, set_type, num_junctions):
                 elif set_type == "random":
                      continue
                 
-                save_dict(params, f"data/synthetic_junctions/{anatomy}/{set_type}/{junction_name}/vessel_params_dict")
+                save_dict(params, f"data/synthetic_junctions/{anatomy}/{set_type}/{junction_name}/junction_params_dict")
     return
 if __name__ == '__main__':
     generate_param_stat_dicts()
