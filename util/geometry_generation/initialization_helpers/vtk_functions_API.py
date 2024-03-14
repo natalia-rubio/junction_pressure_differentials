@@ -28,6 +28,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
 """
 Collection of useful functions using vtk geometries
 """
@@ -128,7 +129,7 @@ class ClosestPoints:
         return ids
 
 
-def region_grow(geo, seed_points, seed_ids, logger, n_max=99):
+def region_grow(geo, seed_points, seed_ids, n_max=99):
     # initialize output arrays
     array_ids = -1 * np.ones(geo.GetNumberOfPoints(), dtype=int)
     array_rad = np.zeros(geo.GetNumberOfPoints())
@@ -153,7 +154,7 @@ def region_grow(geo, seed_points, seed_ids, logger, n_max=99):
         print_str = 'Iteration ' + str(i)
         print_str += '\tNew points ' + str(len(pids_old)) + '     '
         print_str += '\tTotal points ' + str(len(pids_all))
-        logger.info(print_str)
+        print(print_str)
 
         # grow region one step
         pids_new = grow(geo, array_ids, pids_old, pids_all, cids_all)

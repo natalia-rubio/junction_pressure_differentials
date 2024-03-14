@@ -87,7 +87,7 @@ def generate_geometries(anatomy, set_type, num_geos):
 if __name__ == "__main__":
     anatomy = sys.argv[1]
     set_type = sys.argv[2]
-    generate_geometries(anatomy = anatomy, set_type = set_type, num_geos = 1)
+    generate_geometries(anatomy = anatomy, set_type = set_type, num_geos = 6)
     # geo_params = load_dict("/Users/natalia/Desktop/vessel_pressure_differentials/data/synthetic_junctions/test/test/vertical_working/vessel_params_dict")
 
     # generate_vessel_mesh("vertical_not_working", geo_params, "test", "test", mesh_divs = 2)

@@ -52,10 +52,16 @@ import pdb
 #os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 def project_0d_to_3D(anatomy, set_type, geo_name, flow_index):
-    fpath0d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/zerod_files/zerod_soln.csv"
-    fpath3d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"initial_soln.vtu"
+    fpath_0d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/zerod_files/zerod_soln.csv"
+    fpath_3d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/mesh-complete.mesh.vtu"
+    fpath_walls = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/walls_combined.vtp"
+    fpath_cent = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/centerlines/centerline.vtp"
+    fpath_cent_proj = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name +"/flow_"+str(flow_index)+"/0D_cent_proj.vtp"
+    fpath_init_soln = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/initial_soln.vtu"
 
-    results_0d = read_results_0d(fpath0d)
+    results_0d, final_time = read_results_0d(fpath_0d)
+    project_results_to_centerline(results_0d, final_time, fpath_cent, fpath_cent_proj)
+    project_centerline_to_3d(fpath_3d, fpath_cent_proj, fpath_walls, fpath_init_soln)
     return
 
 def read_results_0d(zerod_soln_path):
@@ -80,12 +86,14 @@ def read_results_0d(zerod_soln_path):
             branchID = int(location[6])
             segID = int(location[11])
             timestep = float(times[i])
-            if timestep > 0.8:
+            #print("timestep: ", timestep)
+            if timestep > 0.7:
                 results_0d[field][branchID][segID][timestep] = float(res_full[i+1, field_ind+2])
+                final_time = timestep
 
-    return 
+    return results_0d, final_time
 
-def project_results_to_centerline(results_0d, fpath_cent):
+def project_results_to_centerline(results_0d, final_time, fpath_cent, fpath_cent_proj):
     """
     Project rom results onto the centerline
     """
@@ -107,10 +115,12 @@ def project_results_to_centerline(results_0d, fpath_cent):
     ids_cent.remove(-1)
 
     # loop all result fields
-    for f in results_0d.keys():
+    for f in ["pressure", "flow"]:
         # check if ROM branch has same ids as centerline
-        ids_rom = list(results_0d[f].keys())
+        ids_rom = list(results_0d[f+"_in"].keys())
         ids_rom.sort()
+        print("ids_cent: ", ids_cent)
+        print("ids_rom: ", ids_rom)
         assert ids_cent == ids_rom, 'Centerline and ROM results have different branch ids'
 
         # initialize output arrays
@@ -118,28 +128,34 @@ def project_results_to_centerline(results_0d, fpath_cent):
         n_outlet = np.zeros(arrays_cent['Path'].shape[0])
 
         # loop all branches
-        for br in results_0d[f].keys():
+        for br in results_0d[f+"_in"].keys():
+
+            segs = results_0d[f+"_in"][br].keys()
+            min_seg = min(segs)
+            max_seg = max(segs)
             # results of this branch
-            res_br = results_0d[f][br]
+            res_br = np.asarray([results_0d[f+"_in"][br][min(segs)][final_time],
+                                results_0d[f+"_out"][br][max(segs)][final_time]])
 
             # get centerline path
             path_cent = arrays_cent['Path'][arrays_cent['BranchId'] == br]
 
             # get node locations from 0D results
-            path_1d_res = results_0d['distance'][br]
+            path_1d_res = path_cent # results_0d['distance'][br]
             f_res = res_br
-            
-            assert np.isclose(path_1d_res[0], 0.0), 'ROM branch path does not start at 0'
-            assert np.isclose(path_cent[0], 0.0), 'Centerline branch path does not start at 0'
-            msg = 'ROM results and centerline have different branch path lengths'
-            assert np.isclose(path_1d_res[-1], path_cent[-1]), msg
+            # print("1D res path:")
+            # print(path_1d_res.keys())
+            # assert np.isclose(path_1d_res[0], 0.0), 'ROM branch path does not start at 0'
+            # assert np.isclose(path_cent[0], 0.0), 'Centerline branch path does not start at 0'
+            # msg = 'ROM results and centerline have different branch path lengths'
+            # assert np.isclose(path_1d_res[-1], path_cent[-1]), msg
 
             # interpolate ROM onto centerline
             # limit to interval [0,1] to avoid extrapolation error interp1d due to slightly incompatible lenghts
-            f_cent = interp1d(path_1d_res / path_1d_res[-1], f_res.T)(path_cent / path_cent[-1]).T
-
+            f_cent_int = interp1d(np.asarray([0, 1]), np.asarray([f_res[0], f_res[1]])) #path_1d_res / path_1d_res[-1], f_res.T)(path_cent / path_cent[-1]).T
+            f_cent = f_cent_int((path_cent - min(path_cent)) / (max(path_cent) - min(path_cent)))
             # store results of this path
-            array_f[arrays_cent['BranchId'] == br] = f_cent[:, 1]
+            array_f[arrays_cent['BranchId'] == br] = f_cent.reshape(-1, 1)
 
             # add upstream part of branch within junction
             if br == 0:
@@ -163,34 +179,115 @@ def project_results_to_centerline(results_0d, fpath_cent):
             jc_path /= jc_path[-1]
 
             # results at upstream branch
-            res_br_u = self.results[f][arrays_cent['BranchId'][jc_cent[0] - 1]]
+            res_br_u = results_0d[f+"_out"][arrays_cent['BranchId'][jc_cent[0] - 1]]
 
             # results at beginning and end of centerline within junction
-            f0 = res_br_u[-1][0]
-            f1 = res_br[0][0]
-
+            f0 = res_br_u[0][final_time]
+            f1 = res_br[0]
             # map 1d results to centerline using paths
             array_f[jc_cent] += interp1d([0, 1], np.vstack((f0, f1)).T)(jc_path).T
 
             # count number of outlets of this junction
             n_outlet[jc_cent] += 1
-
         # normalize results within junctions by number of junction outlets
         is_jc = n_outlet > 0
         array_f[is_jc] = (array_f[is_jc].T / n_outlet[is_jc]).T
 
         # assemble time steps
-        for i, t in enumerate(self.params.times):
-            arrays[f + '_' + str(t)] = array_f[:, i]
+        for i, t in enumerate([final_time,]):
+            arrays[f] = array_f[:, i]
 
     # add arrays to centerline and write to file
     for f, a in arrays.items():
         out_array = n2v(a)
         out_array.SetName(f)
-        self.geos['cent'].GetPointData().AddArray(out_array)
-    f_out = os.path.join(self.params.output_directory, self.params.output_file_name + '.vtp')
-    write_geo(f_out, self.geos['cent'])
+        cent.GetPointData().AddArray(out_array)
+    write_geo(fpath_cent_proj, cent)
 
+def get_centerline_3d_map(geo3d, geo1d):
+    """
+    Create a map from centerine to volume mesh through region growing
+    """
+    # get points
+    
+    points_vol = v2n(geo3d.GetPoints().GetData())
+    points_1d  = v2n(geo1d.GetPoints().GetData())
+
+    # get volume points closest to centerline
+    cp_vol = ClosestPoints(geo3d)
+    seed_points = np.unique(cp_vol.search(points_1d))
+
+    # map centerline points to selected volume points
+    cp_1d = ClosestPoints(geo1d)
+    seed_ids = np.array(cp_1d.search(points_vol[seed_points]))
+
+    # call region growing algorithm
+    ids, dist, rad = region_grow(geo3d, seed_points, seed_ids, n_max=999)
+
+    # check 1d to 3d map
+    assert np.max(ids) <= geo1d.GetNumberOfPoints() - 1, '1d-3d map non-conforming'
+
+    return ids, dist, rad
+
+
+def project_centerline_to_3d(fpath_3d, fpath_cent_proj, fpath_walls, fpath_init_soln):
+    """
+    Map 1D results on centerline to volume mesh
+    """
+    geo3d = read_geo(fpath_3d); geo1d = read_geo(fpath_cent_proj); geowalls = read_geo(fpath_walls)
+    # get 1d -> 3d map
+    map_ids, map_iter, map_rad = get_centerline_3d_map(geo3d, geo1d)
+
+    # get arrays
+    arrays_cent = collect_arrays(geo1d.GetPointData())
+
+    # map all centerline arrays to volume geometry
+    for name, array in arrays_cent.items():
+        add_array(geo3d, name, array[map_ids])
+
+    # add mapping to volume mesh
+    for name, array in zip(['MapIds', 'MapIters'], [map_ids, map_iter]):
+        add_array(geo3d, name, array)
+
+    # inverse map
+    map_ids_inv = {}
+    for i in np.unique(map_ids):
+        map_ids_inv[i] = np.where(map_ids == i)
+
+    # create radial coordinate [0, 1]
+    rad = np.zeros(geo3d.GetNumberOfPoints())
+    for i, ids in map_ids_inv.items():
+        rad_max = np.max(map_rad[ids])
+        if rad_max == 0:
+            rad_max = np.max(map_rad)
+        rad[ids] = map_rad[ids] / rad_max
+    add_array(geo3d, 'rad', rad)
+
+    # set points at wall to hard 1
+    wall_ids = collect_arrays(geowalls.GetPointData())['GlobalNodeID'].astype(int) - 1
+    rad[wall_ids] = 1
+
+    # mean velocity
+    for a in arrays_cent.keys():
+        if 'flow' in a:
+            u_mean = arrays_cent[a] / arrays_cent['CenterlineSectionArea']
+
+            # parabolic velocity
+            u_quad = 2 * u_mean[map_ids] * (1 - rad ** 2)
+
+            # scale parabolic flow profile to preserve mean flow
+            for i, ids in map_ids_inv.items():
+                u_mean_is = np.mean(u_quad[map_ids_inv[i]])
+                u_quad[ids] *= u_mean[i] / u_mean_is
+
+            # parabolic velocity vector field
+            velocity = np.outer(u_quad, np.ones(3)) * arrays_cent['CenterlineSectionNormal'][map_ids]
+
+            # add to volume mesh
+            add_array(geo3d, a.replace('flow', 'velocity'), velocity)
+
+    # write to file
+    write_geo(fpath_init_soln, geo3d)
 
 # class Post(object):
 #     """
@@ -307,29 +404,7 @@ def project_results_to_centerline(results_0d, fpath_cent):
 
 
 
-#     def get_centerline_3d_map(self):
-#         """
-#         Create a map from centerine to volume mesh through region growing
-#         """
-#         # get points
-#         points_vol = v2n(self.geos['vol'].GetPoints().GetData())
-#         points_1d = v2n(self.geos['cent'].GetPoints().GetData())
 
-#         # get volume points closest to centerline
-#         cp_vol = ClosestPoints(self.geos['vol'])
-#         seed_points = np.unique(cp_vol.search(points_1d))
-
-#         # map centerline points to selected volume points
-#         cp_1d = ClosestPoints(self.geos['cent'])
-#         seed_ids = np.array(cp_1d.search(points_vol[seed_points]))
-
-#         # call region growing algorithm
-#         ids, dist, rad = region_grow(self.geos['vol'], seed_points, seed_ids, self.logger, n_max=999)
-
-#         # check 1d to 3d map
-#         assert np.max(ids) <= self.geos['cent'].GetNumberOfPoints() - 1, '1d-3d map non-conforming'
-
-#         return ids, dist, rad
 
 #     def project_centerline_to_3d(self):
 #         """

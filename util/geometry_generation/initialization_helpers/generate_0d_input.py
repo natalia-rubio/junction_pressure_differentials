@@ -30,7 +30,7 @@ def write_0D_flow(anatomy, set_type, geo_name, flow_index, flow_amp):
     t = np.linspace(start = 0, stop = num_time_steps, num = num_time_steps)
     q = t*0
     for i in range(t.size):
-        q[i] = -1 * flow_amp * (flow_index + 1) * 0.25
+        q[i] = flow_amp * (flow_index + 1) * 0.25
 
         flow = flow + "%1.5f %1.3f\n" %(i*0.2, q[i])
     f = open("data/synthetic_junctions/" + anatomy + "/" + set_type + "/" + geo_name + "/" + flow_name + "/" + flow_name + "_zerod.flow", "w")
@@ -45,11 +45,6 @@ def write_input_file(anatomy, set_type, geo_name, flow_index):
     inlet_cap_number = int(np.load(geo_dir + "/max_area_cap.npy")[0])
     cap_numbers = get_cap_numbers(geo_dir + "/mesh-complete/mesh-surfaces/"); print(cap_numbers)
     cap_numbers.remove(('cap_' + str(inlet_cap_number)))
-
-    ## Set some directory paths. 
-    
-    #parent_path = Path(os.path.realpath(__file__)).parent.parent
-    #data_path = parent_path / 'data'
 
     ## Create a ROM simulation.
     input_dir = str(geo_dir + "/" + "input")
