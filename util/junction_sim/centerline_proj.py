@@ -114,9 +114,9 @@ def extract_results(fpath_1d, fpath_3d, fpath_out, only_caps=False, num_time_ste
     return
 
 
-def plot_vars(anatomy, geometry, flow, plot_pressure = True, num_time_steps = 1000):
-    offset = 10
-    fpath_1dsol = f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{geometry}/1dsol_flow_solution_{flow}.vtp"
+def plot_vars(anatomy, set_type, geometry, flow, plot_pressure = True, num_time_steps = 1000):
+    offset = 1
+    fpath_1dsol = f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geometry}/1dsol_flow_solution_{flow}.vtp"
     soln = read_geo(fpath_1dsol).GetOutput()  # get 3d flow data
 
     soln_array = get_all_arrays(soln)
@@ -188,5 +188,5 @@ def plot_vars(anatomy, geometry, flow, plot_pressure = True, num_time_steps = 10
             tmp = copy.deepcopy(soln_dict[value][0])
             soln_dict[value][0] = soln_dict[value][1]
             soln_dict[value][1] = tmp
-    save_dict(soln_dict, f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{geometry}/flow_{flow}_red_sol")
+    save_dict(soln_dict, f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geometry}/flow_{flow}_red_sol_full")
     return

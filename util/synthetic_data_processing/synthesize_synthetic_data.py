@@ -1,7 +1,6 @@
 import sys
-sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
-
+plt.rcParams.update(plt.rcParamsDefault)
 def get_name_end( unsteady = False, use_steady_ab = True):
     name_end = ""
     if unsteady and use_steady_ab:
@@ -9,10 +8,10 @@ def get_name_end( unsteady = False, use_steady_ab = True):
     if not unsteady:
         name_end += "steady"
 
-def get_coefs(anatomy, rm_low_r2 = True, unsteady = False, use_steady_ab = True):
+def get_coefs(anatomy, set_type, rm_low_r2 = True, unsteady = False, use_steady_ab = True):
 
     num_outlets = 2
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     char_val_dict.update({"coef_a": [],
                     "coef_b": [],
                     "coef_L": [],
@@ -88,11 +87,11 @@ def get_coefs(anatomy, rm_low_r2 = True, unsteady = False, use_steady_ab = True)
             except:
                 continue
     plt.savefig("results/flow_vs_dp")
-    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
+    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     return
 
-def remove_outlier_coefs(anatomy, sd_tol):
-    char_val_dict = load_dict(f"/home/nrubio/Desktop/aorta_synthetic_data_dict_{anatomy}")
+def remove_outlier_coefs(anatomy, set_type, sd_tol):
+    char_val_dict = load_dict(f"/home/nrubio/Desktop/aorta_synthetic_data_dict_{anatomy}_{set_type}")
 
     outlier_inds, non_outlier_inds = get_outlier_inds(char_val_dict["coef_a"][::2], m = sd_tol)
 
@@ -107,14 +106,14 @@ def remove_outlier_coefs(anatomy, sd_tol):
             continue
 
     print(f"a outlier_inds: {outlier_inds}")
-    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
+    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     return
 
-def get_geo_scalings(anatomy, unsteady = False):
+def get_geo_scalings(anatomy, set_type, unsteady = False):
 
     #plt.style.use('dark_background')
 
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     scaling_dict = {}
     to_normalize = ["outlet_radius","inlet_radius","outlet_area","inlet_area", "angle", "coef_a", "coef_b", "inlet_length", "outlet_length"]
     if unsteady:
@@ -122,6 +121,15 @@ def get_geo_scalings(anatomy, unsteady = False):
         to_normalize.append("coef_a_UO")
         to_normalize.append("coef_b_UO")
         to_normalize.append("coef_L_UO")
+
+    if not os.path.exists(f"results/synthetic_data_trends"):
+        os.mkdir(f"results/synthetic_data_trends")
+    if not os.path.exists(f"results/synthetic_data_trends/geo_dist"):
+        os.mkdir(f"results/synthetic_data_trends/geo_dist")
+    if not os.path.exists(f"results/synthetic_data_trends/a_trends"):
+        os.mkdir(f"results/synthetic_data_trends/a_trends")
+    if not os.path.exists(f"results/synthetic_data_trends/b_trends"):
+        os.mkdir(f"results/synthetic_data_trends/b_trends")
     for value in to_normalize:
 
         scaling_dict.update({value: [np.mean(char_val_dict[value]), np.std(char_val_dict[value])]})
@@ -131,23 +139,23 @@ def get_geo_scalings(anatomy, unsteady = False):
         plt.hist(char_val_dict[value], bins = 30, alpha = 0.5, label = "outlet2")
         plt.xlabel(value); plt.ylabel("frequency"); plt.title("Synthetic Aorta Data");
         plt.legend()
-        plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_{value}_both.png", bbox_inches='tight', transparent=False, format = "png")
+        plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_{set_type}_{value}_both.png", bbox_inches='tight', transparent=False, format = "png")
 
         plt.clf()
         plt.scatter(char_val_dict[value], char_val_dict["coef_a"])
         plt.xlabel(value); plt.ylabel("a"); plt.title(f"Synthetic {anatomy} Data");
-        plt.savefig(f"results/synthetic_data_trends/a_trends/{anatomy}_{value}.png", bbox_inches='tight', transparent=False, format = "png")
+        plt.savefig(f"results/synthetic_data_trends/a_trends/{anatomy}_{set_type}_{value}.png", bbox_inches='tight', transparent=False, format = "png")
 
         plt.clf()
         plt.scatter(char_val_dict[value], np.asarray(char_val_dict["coef_b"]))
         plt.xlabel(value); plt.ylabel("b"); plt.title(f"Synthetic {anatomy} Data");
-        plt.savefig(f"results/synthetic_data_trends/b_trends/{anatomy}_{value}.png", bbox_inches='tight', transparent=False, format = "png")
+        plt.savefig(f"results/synthetic_data_trends/b_trends/{anatomy}_{set_type}_{value}.png", bbox_inches='tight', transparent=False, format = "png")
 
         if unsteady:
             plt.clf()
             plt.scatter(char_val_dict[value], np.asarray(char_val_dict["coef_L"]))
             plt.xlabel(value); plt.ylabel("L"); plt.title(f"Synthetic {anatomy} Data");
-            plt.savefig(f"results/synthetic_data_trends/L_trends/{anatomy}_{value}.png", bbox_inches='tight', transparent=False, format = "png")
+            plt.savefig(f"results/synthetic_data_trends/L_trends/{anatomy}_{set_type}_{value}.png", bbox_inches='tight', transparent=False, format = "png")
 
     plt.clf()
     plt.hist([dP_list_ind[-1] for dP_list_ind in char_val_dict["dP_list"]], bins = 30, alpha = 0.5, label = "outlet1")
@@ -159,18 +167,19 @@ def get_geo_scalings(anatomy, unsteady = False):
     plt.hist([flow_list_ind[-1] for flow_list_ind in char_val_dict["flow_list"]], bins = 30, alpha = 0.5, label = "outlet1")
     plt.xlabel(value); plt.ylabel("frequency"); plt.title(f"Synthetic {anatomy} Data");
     plt.legend()
-    plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_flow_both.png", bbox_inches='tight', transparent=False, format = "png")
+    plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_{set_type}_flow_both.png", bbox_inches='tight', transparent=False, format = "png")
 
     plt.clf()
     plt.scatter(char_val_dict["outlet_radius"], [dP_list_ind[-1] for dP_list_ind in char_val_dict["dP_list"]])
     plt.xlabel("outlet_radius"); plt.ylabel("pressure_differential"); plt.title(f"Synthetic {anatomy} Data");
-    plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_radius_dp.png", bbox_inches='tight', transparent=False, format = "png")
+    plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_{set_type}_radius_dp.png", bbox_inches='tight', transparent=False, format = "png")
 
     plt.clf()
     plt.scatter([flow_list_ind[-1] for flow_list_ind in char_val_dict["flow_list"]], [dP_list_ind[-1] for dP_list_ind in char_val_dict["dP_list"]])
     plt.xlabel("flow"); plt.ylabel("pressure_differential"); plt.title(f"Synthetic {anatomy} Data");
-    plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_flow_dp.png", bbox_inches='tight', transparent=False, format = "png")
+    plt.savefig(f"results/synthetic_data_trends/geo_dist/{anatomy}_{set_type}_flow_dp.png", bbox_inches='tight', transparent=False, format = "png")
 
-
-    save_dict(scaling_dict, f"data/scaling_dictionaries/{anatomy}_scaling_dict")
+    if not os.path.exists(f"data/scaling_dictionaries"):
+        os.mkdir(f"data/scaling_dictionaries")
+    save_dict(scaling_dict, f"data/scaling_dictionaries/{anatomy}_{set_type}_scaling_dict")
     return

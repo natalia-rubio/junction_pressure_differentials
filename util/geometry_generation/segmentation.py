@@ -54,8 +54,8 @@ def get_branch_segmentations(params):
     branch_path = sv.pathplanning.Path()
 
     # Add outlet 2 points to path
-    t_outlet2 = np.linspace(0, params["outlet2_length"], num_pts + 1, endpoint = True)
-    outlet2_path_points_list = [[t*np.sin(np.pi * params["angle2"]/180), 
+    t_outlet2 = np.linspace(0, params["outlet2_length"]+2*params["outlet2_radius"]*1.5, num_pts + 1, endpoint = True)
+    outlet2_path_points_list = [[t*np.sin(np.pi * params["angle2"]/180) - params["outlet1_radius"] * np.sin(np.pi * params["angle1"]/180), 
                                 t*np.cos(np.pi * params["angle2"]/180),
                                 0.0] for t in t_outlet2]
     for point in outlet2_path_points_list:

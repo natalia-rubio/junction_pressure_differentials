@@ -1,11 +1,12 @@
 import sys
-sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
+sys.path.append("/Users/natalia/Desktop/junction_pressure_differentials")
 from util.unified0D_plus.apply_unified0D_plus  import *
 from util.unified0D_plus.graph_to_junction_dict import *
 
 from util.regression.neural_network.training_util import *
 from util.tools.graph_handling import *
 from util.tools.basic import *
+plt.rcParams.update(plt.rcParamsDefault)
 import tensorflow as tf
 import dgl
 from dgl.data import DGLDataset
@@ -22,12 +23,13 @@ def dP_poiseuille(flow, radius, length):
     dP = 8 * mu * length * flow /(np.pi * radius**4)
     return dP
 
-def vary_param(anatomy, variable):
+def plot_mesh_convergence(anatomy):
+    set_type = "mesh_convergence"
     color = "royalblue"
     dP_type = "end"
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
 
-    scaling_dict = load_dict(f"data/scaling_dictionaries/mynard_rand_scaling_dict_steady")
+    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_{set_type}_scaling_dict")
     dPs = []
     marker_list = ["o", "v", "s", "d", "X", "*"]
 
@@ -36,12 +38,9 @@ def vary_param(anatomy, variable):
     elif anatomy[0:5] == "Pulmo":
         ref_list = ["6.4E4 cells", "9.3E4 cells", "1.6E5 cells", "2.5E5 cells", "5.1E5 cells" , "9.1E5 cells"]
     elif anatomy[0:5] == "mynar":
-        ref_list = ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
-    #ref_list = ["6.1E5 elements","3.3E5 elements","1.7E5 elements", "9.9E5 elements"]
-    #ref_list = ["1.3E5 cells", "1.6E5 cells", "3.5E5 cells", "6.9E5 cells", "1.5E6 cells", "1.9E6 cells"]# ["1", "2", "3", "4", "5"]
-    #ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
-    #ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
-    #ref_list = ["6.4E4 cells", "9.3E4 cells", "1.6E5 cells", "2.5E5 cells", "5.1E5 cells" , "9.1E5 cells"]
+        ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
+    elif anatomy == "AP":
+        ref_list = ["1.6E4", "3.1E4", "8.8E4", "1.8E5", "5.3E5", "1.2E6"]
     re_max = 0
 
     for i in range(int(len(char_val_dict["name"])/2)):
@@ -49,16 +48,7 @@ def vary_param(anatomy, variable):
         outlet_ind = 1
         if char_val_dict["outlet_area"][2*i] < char_val_dict["outlet_area"][2*i +1 ]:
             outlet_ind = 1
-        # if i/int(len(char_val_dict["name"])/2) < 0.5:
-        #     outlet_ind = 1
-        # else:
-        #     outlet_ind = 1
-        #print(outlet_ind)
 
-        # if i/int(len(char_val_dict["name"])/2) < 0.5:
-        #     outlet_ind = 1
-        # else:
-        #     outlet_ind = 0
         print(outlet_ind)
 
         inlet_data = np.stack((scale(scaling_dict, char_val_dict["inlet_area"][2*i], "inlet_area").reshape(1,-1),
@@ -68,7 +58,7 @@ def vary_param(anatomy, variable):
             scale(scaling_dict, np.asarray(char_val_dict["outlet_area"][2*i: 2*(i+1)]), "outlet_area"),
             scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i: 2*(i+1)]), "angle"),
             )).T
-        #print(outlet_data)
+
         outlet_flows = np.stack((np.asarray(char_val_dict["flow_list"][2*i]).T,
                                 np.asarray(char_val_dict["flow_list"][2*i + 1]).T))
 
@@ -116,6 +106,20 @@ def vary_param(anatomy, variable):
                         + tf.linspace(flow_tensor[1,0], flow_tensor[1,-1], 100)
 
 
+    plt.xlabel("$Q \;  (\mathrm{cm^3/s})$" + f"    (Outlet Re {int(re_max)})")
+    plt.ylabel("$\Delta P$ (mmHg)")
+    plt.legend(fontsize="12", bbox_to_anchor=(1.05, 1.0), loc='upper left')
+    if os.path.exists(f"results") == False:
+        os.mkdir(f"results")
+    if os.path.exists(f"results/mesh_convergence") == False:
+        os.mkdir(f"results/mesh_convergence")
+    plt.savefig(f"results/mesh_convergence/mesh_refinement_study_{anatomy}.pdf", bbox_inches='tight', format = "pdf")
+    return
+
+anatomy = sys.argv[1]
+plot_mesh_convergence(anatomy)
+
+
     # junction_dict_global = graphs_to_junction_dict_steady([graph], scaling_dict)
     # flow_arr = flow_tensor.numpy()
     # dP_mynard_list = []
@@ -130,12 +134,19 @@ def vary_param(anatomy, variable):
     # dP_mynard = np.asarray(dP_mynard_list)
     #plt.plot(np.asarray(flow_tensor_cont)[1:], dP_mynard/1333, "--", linewidth=2, color = color, label = "Unified0D+")
 
-    plt.xlabel("$Q \;  (\mathrm{cm^3/s})$" + f"    (Outlet Re {int(re_max)})")
-    plt.ylabel("$\Delta P$ (mmHg)")
-    plt.legend(fontsize="12", bbox_to_anchor=(1.05, 1.0), loc='upper left')
-    plt.savefig(f"results/mesh_convergence/mesh_refinement_study_{anatomy}.pdf", bbox_inches='tight', format = "pdf")
-    return
+        # if i/int(len(char_val_dict["name"])/2) < 0.5:
+        #     outlet_ind = 1
+        # else:
+        #     outlet_ind = 1
+        #print(outlet_ind)
 
-anatomy = sys.argv[1]
-vary_param(anatomy, "rout")
-#vary_param("Aorta_vary_angle", "angle")
+        # if i/int(len(char_val_dict["name"])/2) < 0.5:
+        #     outlet_ind = 1
+        # else:
+        #     outlet_ind = 0
+
+    #ref_list = ["6.1E5 elements","3.3E5 elements","1.7E5 elements", "9.9E5 elements"]
+    #ref_list = ["1.3E5 cells", "1.6E5 cells", "3.5E5 cells", "6.9E5 cells", "1.5E6 cells", "1.9E6 cells"]# ["1", "2", "3", "4", "5"]
+    #ref_list = ["4.5E5 cells", "8.0E5 cells", "1.3E6 cells", "1.8E6 cells"] # Mynard
+    #ref_list = ["1.9E5 cells", "2.7E5 cells", "4.4E5 cells", "9.0E5 cells", "1.5E6 cells" , "2.3E6 cells"] # Aorta
+    #ref_list = ["6.4E4 cells", "9.3E4 cells", "1.6E5 cells", "2.5E5 cells", "5.1E5 cells" , "9.1E5 cells"]

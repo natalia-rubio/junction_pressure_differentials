@@ -10,6 +10,7 @@ import os
 import platform
 from util.geometry_generation.meshing_helpers import *
 import copy
+import pdb
 
 def construct_model(model_name, segmentations, geo_params):
     center_shift = geo_params["outlet2_radius"] * np.cos(geo_params["angle2"] * np.pi/180)
@@ -23,17 +24,35 @@ def construct_model(model_name, segmentations, geo_params):
     model = norm(model)
     model.write("junction_model_normed", "vtp")
     #tmp = model.get_polydata()
-    smooth_model = model.get_polydata()
-    #smoothing_params = {'method':'constrained', 'num_iterations':100}
-    smoothing_params = {'method':'constrained', 'num_iterations':100, 'constrain_factor':0.7, 'num_cg_solves':30}
-    smooth_model = sv.geometry.local_sphere_smooth(surface = smooth_model, 
-                                                   radius = 4*geo_params["outlet1_radius"], 
-                                                   center = [0, center_shift, 0], 
-                                                   smoothing_parameters = smoothing_params)
-    # [=== Combine faces ===]
-    #
-    #model.set_surface(smooth_model)
+    # smooth_model = model.get_polydata()
+    # #smoothing_params = {'method':'constrained', 'num_iterations':100}
+
     print("Surface set.")
+    face_inc = 1
+    num_walls = 3
+    num_caps = 6
+    while num_walls != 2: # or num_caps > 5:
+        face_inc += 1
+        model.compute_boundary_faces(face_inc)
+        caps = model.identify_caps()
+        ids = model.get_face_ids()
+        walls = [ids[i] for i,x in enumerate(caps) if not x]
+        num_walls = len(walls)
+        #num_caps
+        #print(caps)
+        print(num_walls)
+    assert num_walls == 2, "Model has more than 2 faces."
+    #pdb.set_trace()
+
+    model = blend_walls(model, blend_radius = 8*geo_params["outlet2_radius"]) #=min([4*geo_params["outlet1_radius"],
+                                                #8*geo_params["outlet2_radius"]]))
+    # smoothing_params = {'method':'constrained', 'num_iterations':30, 'constrain_factor':0.7, 'num_cg_solves':30}
+    # smooth_model = sv.geometry.local_sphere_smooth(surface = model.get_polydata(), 
+    #                                                radius = 7*geo_params["outlet1_radius"], 
+    #                                                center = [0, center_shift, 0], 
+    #                                                smoothing_parameters = smoothing_params)
+    # model.set_surface(smooth_model)
+    model.write("blended_model", "vtp")
     model.compute_boundary_faces(85)
     model, walls, caps, ids = combine_walls(model)
     model = combine_caps(model, walls, ids, num_caps = 3)
@@ -43,7 +62,7 @@ def construct_model(model_name, segmentations, geo_params):
     return model
 
 def get_mesh(model_name, model, geo_params, anatomy, set_type, mesh_divs, sphere_ref):
-    center_shift = geo_params["outlet2_radius"] * np.cos(geo_params["angle2"] * np.pi/180)
+    center_shift = geo_params["outlet1_radius"] * np.cos(geo_params["angle1"] * np.pi/180)
     #mesh_divs = 3
     sphere_ref = 0.5
     sphere_offset = 0

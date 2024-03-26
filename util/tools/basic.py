@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
+sys.path.append("/Users/natalia/Desktop/junction_pressure_differentials")
 import numpy as np
 import pickle
 import copy

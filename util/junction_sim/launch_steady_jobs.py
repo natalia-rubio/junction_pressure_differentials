@@ -42,10 +42,10 @@ while num_launched < num_geos:
             if num_flows == 2:
                 if i == 0 or i == 2:
                     continue
-            if os.path.exists(f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo_name}/flow_{i}_red_sol"):
+            if os.path.exists(f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo_name}/flow_{i}_red_sol_full"):
                 print(f"Simulation already complete for flow {flow_index}")
                 continue
-            set_up_sim_directories(anatomy, set_type, geo_name, flow_name)
+            set_up_sim_directories(anatomy, set_type, geo_name, flow_name, num_cores)
             flow_params = {"flow_amp": inlet_flow*inlet_flow_fac,
                             "vel_in": inlet_flow*inlet_flow_fac/inlet_area,
                             "res_1": 100,

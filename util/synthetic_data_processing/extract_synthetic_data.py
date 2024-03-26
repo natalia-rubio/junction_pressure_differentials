@@ -2,8 +2,8 @@ import sys
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 
-def extract_steady_flow_data(anatomy, geo, require4):
-    results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/"
+def extract_steady_flow_data(anatomy, set_type, geo, require4):
+    results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo}/"
 
     flow_lists = [[0],[0]]
     dP_lists = [[0],[0]]
@@ -12,9 +12,9 @@ def extract_steady_flow_data(anatomy, geo, require4):
     for i in range(4):
         # if i == 1 or i ==3:
         #     continue
+        #pdb.set_trace()
         try:
-            flow_result_dir = results_dir + f"flow_{i}_red_sol"
-
+            flow_result_dir = results_dir + f"flow_{i}_red_sol_full"
             if not os.path.exists(results_dir):
                 if require4:
                     assert os.path.exists(results_dir), f"Flow {i} missing for geometry {geo}"
@@ -30,10 +30,13 @@ def extract_steady_flow_data(anatomy, geo, require4):
         except:
             if require4:
                 raise ValueError
+            else:
+                raise ValueError(f"Could not extract steady data from {geo}, flow {i}.\n\
+                                 Solution dict: {soln_dict}")
     return flow_lists, dP_lists, dP_junc_lists
 
-def extract_unsteady_flow_data(anatomy, geo):
-    unsteady_result_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/unsteady_red_sol"
+def extract_unsteady_flow_data(anatomy, set_type, geo):
+    unsteady_result_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo}/unsteady_red_sol"
     unsteady_soln_dict = load_dict(unsteady_result_dir)
 
     if anatomy[0:5] == "Aorta":
@@ -69,9 +72,8 @@ def extract_unsteady_flow_data(anatomy, geo):
     return unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists
 
 
-
-def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
-    print(anatomy)
+def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = False):
+    print(f"Anatomy: {anatomy}")
 
     char_val_dict = {"outlet_radius": [],
                     "inlet_area": [],
@@ -88,38 +90,39 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
                     "outlet_length": [],
                     "name": []}
 
-    home_dir = os.path.expanduser("~")
-    geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}"); geos.sort(); print(geos)
+    geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}"); geos.sort(); print(f"Geometries: {geos}")
     plt.clf()
     for j, geo in enumerate(geos[0:]):
 
         try:
-            #import pdb; pdb.set_trace()
-            junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{geo}/junction_params_dict")
+            junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{set_type}/{geo}/junction_params_dict")
 
-            flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, geo, require4)
-
+            flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, set_type, geo, require4)
+            
             if len(flow_lists[0]) <= 2:
                 continue
 
             if unsteady:
                 try:
-                    unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, geo)
+                    unsteady_flow_lists, unsteady_flow_der_lists, unsteady_dP_lists = extract_unsteady_flow_data(anatomy, set_type, geo)
                     char_val_dict["unsteady_flow_list"] += unsteady_flow_lists
                     char_val_dict["unsteady_flow_der_list"] += unsteady_flow_der_lists
                     char_val_dict["unsteady_dP_list"] += unsteady_dP_lists
                 except:
                     continue
-            print(flow_lists, dP_lists)
             char_val_dict["flow_list"] += flow_lists
             char_val_dict["dP_list"] += dP_lists
             char_val_dict["dP_junc_list"] += dP_junc_lists
 
 
 
-
-            results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{geo}/flow_1_red_sol"
+            # Extract geometric data from one steady solution
+            results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo}/flow_0_red_sol_full"
+            assert os.path.exists(results_dir), f"Results directory {results_dir} does not exist."
             soln_dict = load_dict(results_dir)
+
+            assert soln_dict["area"] is not None, f"Area not found in reduced solution for {geo}."
+            assert soln_dict["length"] is not None, f"Length not found in reduced solution for {geo}."
 
             char_val_dict["inlet_radius"] += [np.sqrt(soln_dict["area"][2]/np.pi), np.sqrt(soln_dict["area"][2]/np.pi)]
             char_val_dict["outlet_radius"] += [np.sqrt(soln_dict["area"][0]/np.pi), np.sqrt(soln_dict["area"][1]/np.pi)]
@@ -130,16 +133,13 @@ def collect_synthetic_results(anatomy, require4 = True, unsteady = False):
             char_val_dict["inlet_length"] += [soln_dict["length"][2], soln_dict["length"][2]]
             char_val_dict["outlet_length"] += [soln_dict["length"][0], soln_dict["length"][1]]
 
-            char_val_dict["angle"] += [junction_params["outlet1_angle"], junction_params["outlet2_angle"]]
+            char_val_dict["angle"] += [junction_params["angle1"], junction_params["angle2"]]
             char_val_dict["name"] += [geo+"_1", geo+"_2"]
 
         except:
             print(f"Problem extracting junction data.  Skipping {geo}.")
             continue
 
-    #import pdb; pdb.set_trace()
-
-
-    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
+    save_dict(char_val_dict, f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     print(f"Extracted {len(char_val_dict['name'])} Outlets")
     return

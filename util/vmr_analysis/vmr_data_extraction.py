@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
+sys.path.append("/Users/natalia/Desktop/junction_pressure_differentials")
 from util.tools.junction_proc import *
 from util.tools.vtk_functions import *
 import matplotlib.pyplot as plt
@@ -80,6 +80,8 @@ def extract_characteristic_values():
                 angle_diffs = get_angle_diff(inlet_angles, outlet_angles)/np.pi
                 angle_diffs = angle_diffs.reshape((len(outlet_pts),))
 
+                outlet_angle_diffs = get_angle_diff(outlet_angles[0,:],outlet_angles[1,:])/np.pi
+                
 
                 flow = list(flow_in_time_aug[max_flow_ind, outlet_pts])
                 inlet_flow = list(flow_in_time_aug[max_flow_ind, inlet_pts])+list(flow_in_time_aug[max_flow_ind, inlet_pts])
@@ -98,6 +100,7 @@ def extract_characteristic_values():
                 char_val_dict[anatomy]["radius"] += radius
                 char_val_dict[anatomy]["inlet_radius"] += inlet_radius
                 char_val_dict[anatomy]["angle"] += list(angle_diffs)
+                char_val_dict[anatomy]["outlet_angle_diffs"] += list(outlet_angle_diffs)
                 char_val_dict[anatomy]["name"] += 2 * [f"model_{model}_junction_{junction_id}"]
         except:
             continue
@@ -120,7 +123,9 @@ def print_aorta_study():
         char_val_dict[anatomy].update({"velocity": np.asarray(char_val_dict[anatomy]["flow"])/ (np.pi*np.square(char_val_dict[anatomy]["radius"]))})
         char_val_dict[anatomy].update({"inlet_velocity": np.asarray(char_val_dict[anatomy]["inlet_flow"])/ (np.pi*np.square(char_val_dict[anatomy]["inlet_radius"]))})
         char_val_dict[anatomy].update({"radius_ratio": np.asarray(char_val_dict[anatomy]["radius"])/ np.asarray(char_val_dict[anatomy]["inlet_radius"])})
-        value_list = ["flow", "angle", "inlet_radius", "velocity", "radius_ratio", "inlet_velocity"]
+        char_val_dict[anatomy].update({"angle_diff": np.asarray(char_val_dict[anatomy]["angle"])[0::2] + \
+                                       np.asarray(char_val_dict[anatomy]["angle"])[1::2]})
+        value_list = ["flow", "angle","angle_diff", "inlet_radius", "velocity", "radius_ratio", "inlet_velocity"]
 
         param_stat_dict.update({anatomy:{}})
 

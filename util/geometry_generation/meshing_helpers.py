@@ -9,7 +9,7 @@ import vtk
 import os
 import platform
 from vtk.util import numpy_support
-
+import pdb
 # LOAD IN CONTOUR GROUPS AND PATHLINES
 # HERE
 
@@ -283,11 +283,30 @@ def create_vessels(contour_list,attempts=3):
 
     return cap_solids
 
+def blend_walls(model, blend_radius):
+    caps = model.identify_caps()
+    ids = model.get_face_ids()
+    walls = [ids[i] for i,x in enumerate(caps) if not x]
+
+    #pdb.set_trace()
+    options = sv.geometry.BlendOptions()
+    options.target_decimation = 0.1
+    options.num_cgsmooth_iterations = 1
+    options.num_lapsmooth_operations = 1
+    #options.num_blend_operations = 1
+    print("\n\nOptions values: ")
+    [ print("  {0:s}:{1:s}".format(key,str(value))) for (key, value) in sorted(options.get_values().items()) ]
+    blend_faces = [ { 'radius': blend_radius, 'face1':walls[0], 'face2':walls[1]} ]
+    
+    blend = sv.geometry.local_blend(surface=model.get_polydata(), faces=blend_faces, options=options)
+    model.set_surface(blend)
+    #[ print("  {0:s}:{1:s}".format(key,str(value))) for (key, value) in sorted(options.get_values().items()) ]
+    return model
+
 def combine_walls(model):
     print("Combining walls")
     caps = model.identify_caps()
     ids = model.get_face_ids()
-    print("ids " + str(ids))
     walls = [ids[i] for i,x in enumerate(caps) if not x]
 
     while len(walls) > 1:

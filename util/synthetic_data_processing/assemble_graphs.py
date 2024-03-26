@@ -3,15 +3,20 @@ sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 from util.tools.junction_proc import *
 
-def assemble_graphs(anatomy, unsteady = False):
+def assemble_graphs(anatomy, set_type, unsteady = False):
 
     graph_list = []
 
-    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_synthetic_data_dict")
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     # if unsteady:
     #     scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
     # else:
-    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_scaling_dict")
+    scaling_dict = load_dict(f"data/scaling_dictionaries/{anatomy}_{set_type}_scaling_dict")
+
+    if not os.path.exists(f"data/graph_lists/{anatomy}"):
+        os.mkdir(f"data/graph_lists/{anatomy}")
+    if not os.path.exists(f"data/graph_lists/{anatomy}/{set_type}"):
+        os.mkdir(f"data/graph_lists/{anatomy}/{set_type}")
 
     for i in range(int(len(char_val_dict["inlet_radius"])/2)):
 
@@ -88,8 +93,8 @@ def assemble_graphs(anatomy, unsteady = False):
         #print(graph.nodes["inlet"])
         #pdb.set_trace()
     if unsteady:
-        dgl.save_graphs(f"data/graph_lists/{anatomy}_graph_list", graph_list)
+        dgl.save_graphs(f"data/graph_lists/{anatomy}/{set_type}/graph_list", graph_list)
 
     else:
-        dgl.save_graphs(f"data/graph_lists/{anatomy}_graph_list_steady", graph_list)
+        dgl.save_graphs(f"data/graph_lists/{anatomy}/{set_type}/graph_list_steady", graph_list)
     return graph

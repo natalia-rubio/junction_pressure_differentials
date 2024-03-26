@@ -35,7 +35,7 @@ def check_convergence(geo_name, flow_index, anatomy, set_type, num_time_steps):
         fpath_3d = f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geometry}/flow_{flow}/solution_flow_{flow}.vtu"
         fpath_out = f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geometry}/1dsol_flow_solution_{flow}.vtp"
         extract_results(fpath_1d, fpath_3d, fpath_out, only_caps=False, num_time_steps = num_time_steps)
-        #plot_vars(anatomy, geo_name, str(flow_index), plot_pressure = True, num_time_steps = num_time_steps)
+        plot_vars(anatomy, set_type, geo_name, str(flow_index), plot_pressure = True, num_time_steps = num_time_steps)
         sys.exit(1)
 
     return

@@ -9,7 +9,7 @@ import subprocess
 import time
 import copy
 
-def set_up_sim_directories(anatomy, set_type, geo_name, flow_name):
+def set_up_sim_directories(anatomy, set_type, geo_name, flow_name, num_procs):
     print("Starting run_simulation function.")
     if not os.path.exists(f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}"):
         os.mkdir(f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}")
@@ -22,8 +22,8 @@ def set_up_sim_directories(anatomy, set_type, geo_name, flow_name):
         os.mkdir(results_dir)
     if not os.path.exists(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/{flow_name}"):
         print("inital solutions missing")
-    if os.path.exists(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/{flow_name}/24-procs_case"):
-        os.system(f"rm -r /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/{flow_name}/24-procs_case")
+    if os.path.exists(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/{flow_name}/{num_procs}-procs_case"):
+        os.system(f"rm -r /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/{flow_name}/{num_procs}-procs_case")
 
     os.system(f"mkdir /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/{flow_name}")
     return

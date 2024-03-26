@@ -1,7 +1,7 @@
 import sys
 sys.path.append("/Users/natalia/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
-
+np.random.seed(0)
 def generate_param_stat_dicts():
     # Distribution informed by Aorta and Pulmonary data
     anatomy = "AP"
@@ -65,7 +65,8 @@ def generate_random_params(anatomy):
     # angles
     param_dict["angle1"] = np.random.uniform(low = params_stat_dict["angle"][0], high = params_stat_dict["angle"][1])
     param_dict["angle2"] = np.random.uniform(low = params_stat_dict["angle"][0], high = params_stat_dict["angle"][1])
-
+    while param_dict["angle1"] < 10 and param_dict["angle2"] < 10:
+        param_dict["angle2"] = np.random.uniform(low = params_stat_dict["angle"][0], high = params_stat_dict["angle"][1])
     param_dict["inlet_velocity"] = 180
     return param_dict
 
@@ -89,10 +90,10 @@ def write_anatomy_junctions(anatomy, set_type, num_junctions):
                     params = generate_mean_params(anatomy)
 
                 elif set_type == "random":
-                     continue
+                     params = generate_random_params(anatomy)
                 
                 save_dict(params, f"data/synthetic_junctions/{anatomy}/{set_type}/{junction_name}/junction_params_dict")
     return
 if __name__ == '__main__':
     generate_param_stat_dicts()
-    write_anatomy_junctions("AP", "mesh_convergence", 10)
+    write_anatomy_junctions("AP", "random", 100)

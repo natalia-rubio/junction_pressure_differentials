@@ -23,7 +23,7 @@ def generate_vessel_mesh(geo_name, geo_params, anatomy, set_type, mesh_divs, sph
 def launch_anatomy_geo_sweep(anatomy, set_type, num_geos = 5):
 
     dir = "data/synthetic_junctions/"+anatomy+"/"+set_type
-    geos = os.listdir(dir)
+    geos = os.listdir(dir); geos.sort()
     for i in range(num_geos):
 
         geo_name = geos[i]
@@ -37,7 +37,13 @@ def launch_anatomy_geo_sweep(anatomy, set_type, num_geos = 5):
 
             print(geo_params)
             if anatomy == "AP":
-                generate_vessel_mesh(geo_name, geo_params, anatomy, set_type, mesh_divs = 2)
+                try:
+                    generate_vessel_mesh(geo_name, geo_params, anatomy, set_type, mesh_divs = 3)
+                    generate_initial_sol(geo_name, anatomy, set_type, geo_params)
+                except:
+                    print("Problem construction geometry " + geo_name)
+                    #pdb.set_trace()
+                    continue
             else:
                 print("Didn't recognize anatomy type.")
     return
@@ -67,7 +73,7 @@ def launch_mesh_sweep(anatomy, set_type, num_geos = 1):
                 print("i:", i)
                 print("Mesh divs:", mesh_divs_list_curved[i])
 
-                #generate_vessel_mesh(geo_name, geo_params, anatomy, set_type, mesh_divs = mesh_divs_list_curved[i])
+                generate_vessel_mesh(geo_name, geo_params, anatomy, set_type, mesh_divs = mesh_divs_list_curved[i])
                 generate_initial_sol(geo_name, anatomy, set_type, geo_params)
             else:
                 print("Didn't recognize anatomy type.")
@@ -87,7 +93,7 @@ def generate_geometries(anatomy, set_type, num_geos):
 if __name__ == "__main__":
     anatomy = sys.argv[1]
     set_type = sys.argv[2]
-    generate_geometries(anatomy = anatomy, set_type = set_type, num_geos = 6)
+    generate_geometries(anatomy = anatomy, set_type = set_type, num_geos = 100)
     # geo_params = load_dict("/Users/natalia/Desktop/vessel_pressure_differentials/data/synthetic_junctions/test/test/vertical_working/vessel_params_dict")
 
     # generate_vessel_mesh("vertical_not_working", geo_params, "test", "test", mesh_divs = 2)
@@ -95,3 +101,4 @@ if __name__ == "__main__":
 # USE THIS COMMAND TO RUN WITH SIMVASCULAR PYTHON:
 # /usr/local/sv/simvascular/2023-02-02/simvascular --python -- util/geometry_generation/launch_anatomy_sweep.py
 # mesh_convergence
+#/Applications/SimVascular.app/Contents/Resources/simvascular --python -- util/geometry_generation/construct_geometries.py
