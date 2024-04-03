@@ -219,8 +219,8 @@ def get_avg_steady_results(ss_tol, fpath_1d, fpath_3d, fpath_out, pt_inds, only_
 
     num_time_steps = int(max_timestep)
     print(f"Reducing {num_time_steps} timesteps.")
-    pressure_in_time= np.zeros((2,len(pt_inds))) # initialize pressure_in_time matrix, each column is a mesh point, each row is a timestep
-    flow_in_time = np.zeros((2,len(pt_inds))) # initialize flow_in_time matrix, each column is a mesh point, each row is a timestep
+    pressure_in_time =  np.zeros((2,len(pt_inds))) # initialize pressure_in_time matrix, each column is a mesh point, each row is a timestep
+    flow_in_time =      np.zeros((2,len(pt_inds))) # initialize flow_in_time matrix, each column is a mesh point, each row is a timestep
     times = list()  # list of timesteps
 
     # integrate results on all points of intergration cells

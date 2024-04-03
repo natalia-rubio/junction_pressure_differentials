@@ -30,15 +30,16 @@ def launch_anatomy_geo_sweep(anatomy, set_type, num_geos = 5):
         print(geo_name)
         if not geo_name[0].isalnum():
             continue
-        if os.path.exists(dir+"/"+geo_name+"/mesh-complete") == False:
+        if os.path.exists(dir+"/"+geo_name+"/mesh-completell") == False:
             print("Generating Geometry " + geo_name)
+            os.system("rm " + dir+"/"+geo_name+"/mesh-complete/model_tmp.vtp")
             print(dir+"/"+geo_name+"/junction_params_dict")
             geo_params = load_dict(dir+"/"+geo_name+"/junction_params_dict")
 
             print(geo_params)
             if anatomy == "AP":
                 try:
-                    generate_vessel_mesh(geo_name, geo_params, anatomy, set_type, mesh_divs = 3)
+                    generate_vessel_mesh(geo_name, geo_params, anatomy, set_type, mesh_divs = 1.5)
                     generate_initial_sol(geo_name, anatomy, set_type, geo_params)
                 except:
                     print("Problem construction geometry " + geo_name)

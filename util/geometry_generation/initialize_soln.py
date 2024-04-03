@@ -1,5 +1,5 @@
 from util.geometry_generation.initialization_helpers.generate_0d_input import *
-from util.geometry_generation.initialization_helpers.projection import *
+from util.junction_sim.projection import *
 import numpy as np
 
 def generate_initial_sol(geo_name, anatomy, set_type, params):
@@ -21,7 +21,7 @@ def generate_initial_sol(geo_name, anatomy, set_type, params):
                dir + "/zerod_files/solver_0d.json " + \
                dir + "/zerod_files/zerod_soln.csv")
       #os.system("deactivate")
-      
-      project_0d_to_3D(anatomy, set_type, geo_name, flow_index)
+      os.system("rm " + dir + "/0D_cent_proj.vtp")
+      #project_0d_to_3D(anatomy, set_type, geo_name, flow_index)
 
    return

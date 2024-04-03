@@ -50,7 +50,7 @@ kkrm -r $outdir"
     f.close()
     return
 
-
+# /home/groups/amarsden/svSolver-github/BuildWithMake/Bin/svpost.exe -start 0 -stop 300 -incr 1 -vtkcombo -indir 24-procs_case -outdir . -vtu solution_flow_3.vtu
 
 def write_svpre_steady_pipe(anatomy, set_type, geo, flow_index, flow_params, cap_numbers, inlet_cap_number, num_time_steps, time_step_size):
     res_caps = cap_numbers

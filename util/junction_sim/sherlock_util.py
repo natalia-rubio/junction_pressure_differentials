@@ -47,7 +47,8 @@ def check_for_centerline(anatomy, set_type, geo_name):
 
 def get_cap_info(anatomy, set_type, geo_name, correct_cap_numbers = 2):
     inlet_cap_number = int(np.load(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/max_area_cap.npy")[0])
-    cap_numbers = get_cap_numbers(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/mesh-complete/mesh-surfaces/"); print(cap_numbers)
+    cap_numbers = get_cap_numbers(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/mesh-complete/mesh-surfaces/")
+    #print(cap_numbers)
 
     if len(cap_numbers) != correct_cap_numbers:
         print("Wrong number of caps.  Deleting.")

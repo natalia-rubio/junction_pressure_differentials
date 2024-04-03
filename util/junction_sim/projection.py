@@ -45,22 +45,39 @@ from vtk.util.numpy_support import vtk_to_numpy as v2n
 
 # from .manage import get_logger_name
 # from .solver import Solver
-from util.geometry_generation.initialization_helpers.vtk_functions_API import read_geo, write_geo, add_array, collect_arrays, ClosestPoints, region_grow
+try:
+    from util.geometry_generation.initialization_helpers.vtk_functions_API import read_geo, write_geo, add_array, collect_arrays, ClosestPoints, region_grow
+except:
+    from util.vtk_functions_API import read_geo, write_geo, add_array, collect_arrays, ClosestPoints, region_grow
 import pdb
 
 # get rid of numpy warnings
 #os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-def project_0d_to_3D(anatomy, set_type, geo_name, flow_index):
-    fpath_0d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/zerod_files/zerod_soln.csv"
-    fpath_3d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/mesh-complete.mesh.vtu"
-    fpath_walls = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/walls_combined.vtp"
-    fpath_cent = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/centerlines/centerline.vtp"
-    fpath_cent_proj = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name +"/flow_"+str(flow_index)+"/0D_cent_proj.vtp"
-    fpath_init_soln = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/initial_soln.vtu"
+def project_0d_to_3D(anatomy, set_type, geo_name, flow_index, local = False):
+    print("Entered projection function.")
+    if local == False:
+        sher_dir = "/scratch/users/nrubio"
+        fpath_0d = sher_dir + "/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/zerod_files/zerod_soln.csv"
+        fpath_3d = sher_dir + "/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/mesh-complete.mesh.vtu"
+        fpath_walls = sher_dir + "/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/walls_combined.vtp"
+        fpath_cent = sher_dir + "/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/centerlines/centerline.vtp"
+        fpath_cent_proj = sher_dir + "/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name +"/flow_"+str(flow_index)+"/0D_cent_proj.vtp"
+        fpath_init_soln = sher_dir + "/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/initial_soln.vtu"
+        
+    else:
+        fpath_0d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/zerod_files/zerod_soln.csv"
+        fpath_3d = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/mesh-complete.mesh.vtu"
+        fpath_walls = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/mesh-complete/walls_combined.vtp"
+        fpath_cent = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/centerlines/centerline.vtp"
+        fpath_cent_proj = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name +"/flow_"+str(flow_index)+"/0D_cent_proj.vtp"
+        fpath_init_soln = "data/synthetic_junctions/"+anatomy+"/"+set_type+"/"+geo_name+"/flow_"+str(flow_index)+"/initial_soln.vtu"
 
+    print("Reading 0D results from: " + fpath_0d)
     results_0d, final_time = read_results_0d(fpath_0d)
+    print("Projecting 0D results to centerline")
     project_results_to_centerline(results_0d, final_time, fpath_cent, fpath_cent_proj)
+    print("Projecting centerline results to 3D mesh")
     project_centerline_to_3d(fpath_3d, fpath_cent_proj, fpath_walls, fpath_init_soln)
     return
 

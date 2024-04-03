@@ -287,13 +287,14 @@ def blend_walls(model, blend_radius):
     caps = model.identify_caps()
     ids = model.get_face_ids()
     walls = [ids[i] for i,x in enumerate(caps) if not x]
-
+    print(walls)
     #pdb.set_trace()
     options = sv.geometry.BlendOptions()
-    options.target_decimation = 0.1
-    options.num_cgsmooth_iterations = 1
+    options.target_decimation = 0.01
+    options.num_cgsmooth_iterations = 150
     options.num_lapsmooth_operations = 1
     #options.num_blend_operations = 1
+    #pdb.set_trace()
     print("\n\nOptions values: ")
     [ print("  {0:s}:{1:s}".format(key,str(value))) for (key, value) in sorted(options.get_values().items()) ]
     blend_faces = [ { 'radius': blend_radius, 'face1':walls[0], 'face2':walls[1]} ]

@@ -43,11 +43,16 @@ def plot_mesh_convergence(anatomy):
         ref_list = ["1.6E4", "3.1E4", "8.8E4", "1.8E5", "5.3E5", "1.2E6"]
     re_max = 0
 
+    flow_arr = []
+    dP_arr = []
+    area_arr = []
+
+
     for i in range(int(len(char_val_dict["name"])/2)):
         print(char_val_dict["name"][2*i])
-        outlet_ind = 1
+        outlet_ind = 0
         if char_val_dict["outlet_area"][2*i] < char_val_dict["outlet_area"][2*i +1 ]:
-            outlet_ind = 1
+            outlet_ind = 0
 
         print(outlet_ind)
 
@@ -98,6 +103,7 @@ def plot_mesh_convergence(anatomy):
         dP = master_tensor[4]
         print(flow_tensor)
 
+        
         plt.scatter(np.asarray(flow_tensor)[outlet_ind,:], np.asarray(dP)[outlet_ind,:]/1333, facecolors='none', edgecolors = color, marker = marker_list[i], s = 50, label = f"{ref_list[i]} mesh elements")
         re_max = max(re_max, get_re(inlet_flow = np.max(np.asarray(flow_tensor)[outlet_ind,:]), inlet_radius = char_val_dict["outlet_radius"][2*i+outlet_ind]))
 

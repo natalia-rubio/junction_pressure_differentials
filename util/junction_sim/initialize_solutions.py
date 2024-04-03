@@ -8,7 +8,7 @@ num_cores = int(sys.argv[4])
 num_geos = int(sys.argv[5])
 num_flows = int(sys.argv[6])
 
-time_step_size = 0.001
+time_step_size = 0.02
 num_launched = 0
 print(f"Launching {num_geos} steady flow sweeps.")
 dir = f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}"
@@ -16,7 +16,7 @@ geos = os.listdir(dir); geos.sort(); geo_ind = 0;#
 
 while num_launched < num_geos:
 
-    geo = geos[geo_ind]; geo_name = geo; print(f"Geometry: {geo_name}")
+    geo = geos[geo_ind]; geo_name = geo; print(geo_name)
     geo_ind += 1
 
     if not check_geo_name(geo):
@@ -46,7 +46,7 @@ while num_launched < num_geos:
             if os.path.exists(f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo_name}/flow_{i}_red_sol_full"):
                 print(f"Simulation already complete for flow {flow_index}")
                 continue
-            print(f"Initializing solution.")
+
             project_0d_to_3D(anatomy, set_type, geo_name, flow_index)
 
             set_up_sim_directories(anatomy, set_type, geo_name, flow_name, num_cores)
@@ -66,8 +66,6 @@ while num_launched < num_geos:
             write_job_steady(anatomy, set_type, geo_name, flow_name = flow_name, flow_index = flow_index, num_cores = num_cores, num_time_steps = num_time_steps)
             os.system(f"sbatch /scratch/users/nrubio/job_scripts/{geo[0]}_f{i}.sh")
             print(f"Started job for {geo} flow {flow_index}")
-            print("\n\
-                  ---------------------------------\n")    
 
         except:
             continue
