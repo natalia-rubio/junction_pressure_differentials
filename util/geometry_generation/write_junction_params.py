@@ -96,4 +96,4 @@ def write_anatomy_junctions(anatomy, set_type, num_junctions):
     return
 if __name__ == '__main__':
     generate_param_stat_dicts()
-    write_anatomy_junctions("AP", "random", 100)
+    write_anatomy_junctions("AP", "random", 300)

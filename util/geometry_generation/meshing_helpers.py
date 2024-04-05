@@ -375,6 +375,7 @@ def get_max_area_cap(mesher, walls):
     mass = vtk.vtkMassProperties()
     mesh = modeling.PolyData()
     faces = mesher.get_model_face_ids()
+    assert len(faces) == 1, "model has only one face"
     print("got model face ids")
     assert walls[0] == faces[0], "first face is wall"
     for face in faces:

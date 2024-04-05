@@ -30,9 +30,12 @@ def launch_anatomy_geo_sweep(anatomy, set_type, num_geos = 5):
         print(geo_name)
         if not geo_name[0].isalnum():
             continue
-        if os.path.exists(dir+"/"+geo_name+"/mesh-completell") == False:
+        if os.path.exists(dir+"/"+geo_name+"/mesh-complete/mesh-surfaces"):
+            if len(os.listdir(dir+"/"+geo_name+"/mesh-complete/mesh-surfaces")) != 3:
+                os.system("rm -r " + dir+"/"+geo_name+"/mesh-complete")
+        if os.path.exists(dir+"/"+geo_name+"/mesh-complete") == False:
             print("Generating Geometry " + geo_name)
-            os.system("rm " + dir+"/"+geo_name+"/mesh-complete/model_tmp.vtp")
+            #os.system("rm " + dir+"/"+geo_name+"/mesh-complete/model_tmp.vtp")
             print(dir+"/"+geo_name+"/junction_params_dict")
             geo_params = load_dict(dir+"/"+geo_name+"/junction_params_dict")
 
@@ -65,7 +68,7 @@ def launch_mesh_sweep(anatomy, set_type, num_geos = 1):
         geo_name = geos[i]
         if not geo_name[0].isalnum():
             continue
-        if os.path.exists(dir+"/"+geo_name+"/mesh-complete1") == False:
+        if os.path.exists(dir+"/"+geo_name+"/mesh-complete") == False:
 
             print("Generating Geometry " + geo_name)
             geo_params = load_dict(dir+"/"+geo_name+"/junction_params_dict")
@@ -94,7 +97,7 @@ def generate_geometries(anatomy, set_type, num_geos):
 if __name__ == "__main__":
     anatomy = sys.argv[1]
     set_type = sys.argv[2]
-    generate_geometries(anatomy = anatomy, set_type = set_type, num_geos = 100)
+    generate_geometries(anatomy = anatomy, set_type = set_type, num_geos = 300)
     # geo_params = load_dict("/Users/natalia/Desktop/vessel_pressure_differentials/data/synthetic_junctions/test/test/vertical_working/vessel_params_dict")
 
     # generate_vessel_mesh("vertical_not_working", geo_params, "test", "test", mesh_divs = 2)

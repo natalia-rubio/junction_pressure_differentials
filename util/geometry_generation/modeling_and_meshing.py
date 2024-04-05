@@ -28,10 +28,10 @@ def construct_model(model_name, segmentations, geo_params):
     # #smoothing_params = {'method':'constrained', 'num_iterations':100}
 
     print("Surface set.")
-    face_angle = 10
-    angle_inc = 10
-    num_walls = 3
-    num_caps = 6
+    # face_angle = 10
+    # angle_inc = 10
+    # num_walls = 3
+    # num_caps = 6
     # while num_walls > 2: # or num_caps > 5:
         
     #     model.compute_boundary_faces(face_angle)
@@ -70,9 +70,40 @@ def construct_model(model_name, segmentations, geo_params):
     model.set_surface(smooth_model)
 
     model.write("blended_model", "vtp")
-    model.compute_boundary_faces(85)
+
+    model.compute_boundary_faces(70)
+
     model, walls, caps, ids = combine_walls(model)
     model = combine_caps(model, walls, ids, num_caps = 3)
+    if len(model.identify_caps()) != 4:
+        print("Searching for boundary face threshold angle.")
+
+        face_angle = 10
+        angle_inc = 10
+        model.compute_boundary_faces(face_angle)
+        caps = model.identify_caps()
+        ids = model.get_face_ids()
+        walls = [ids[i] for i,x in enumerate(caps) if not x]
+        num_walls = len(walls); num_caps = len(caps) - num_walls
+
+        while num_walls != 1 or num_caps != 3:
+            
+            face_angle += angle_inc
+
+            model.compute_boundary_faces(face_angle)
+            caps = model.identify_caps()
+            ids = model.get_face_ids()
+            walls = [ids[i] for i,x in enumerate(caps) if not x]
+            num_walls = len(walls); num_caps = len(caps) - num_walls
+            print("Number of surfaces: " + str(len(caps)) + " (threshold angle " + str(face_angle) + ")")
+
+
+            if len(caps) < 4:
+                face_angle -= angle_inc
+                angle_inc *= 0.1
+                
+            
+
     print("boundary faces computed")
     model.write("junction_model", "vtp")
 
@@ -81,6 +112,8 @@ def construct_model(model_name, segmentations, geo_params):
 def get_mesh(model_name, model, geo_params, anatomy, set_type, mesh_divs, sphere_ref):
     # center_shift = geo_params["outlet1_radius"] * np.cos(geo_params["angle1"] * np.pi/180)
     # #mesh_divs = 3
+    # if model_name == "AP_011":
+    #     pdb.set_trace()
     sphere_ref = 0.2
     # sphere_offset = 0
     print("Mesh divs:", mesh_divs)
@@ -93,6 +126,8 @@ def get_mesh(model_name, model, geo_params, anatomy, set_type, mesh_divs, sphere
     faces = model.get_face_ids()
     cap_faces = [ids[i] for i,x in enumerate(caps) if x]
     print(cap_faces)
+    # if model_name == "AP_011":
+    #     pdb.set_trace()    
     # max_area_cap = get_inlet_cap(mesher, walls):
     #
     # out_caps = copy.copy(cap_faces)
@@ -126,6 +161,7 @@ def get_mesh(model_name, model, geo_params, anatomy, set_type, mesh_divs, sphere
 
     msh = mesher.get_mesh()
     generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, faces, anatomy, set_type)
+
     return msh, model
 
 def generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, faces, anatomy, set_type):
@@ -147,7 +183,7 @@ def generate_mesh_complete_folder(model, mesher, model_name, caps, ids, walls, f
     print(max_area_cap)
     out_caps = faces[1:]
     out_caps.remove(max_area_cap)
-    assert len(out_caps) == 3, "Wrong number of caps."
+    assert len(out_caps) == 2, "Wrong number of caps."
     np.save(dir+"/max_area_cap", np.asarray([max_area_cap]), allow_pickle = True)
 
     model.write(dir +  '/mesh-complete'+os.sep+'model_tmp','vtp')
