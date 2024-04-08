@@ -24,7 +24,7 @@ def launch_anatomy_geo_sweep(anatomy, set_type, num_geos = 5):
 
     dir = "data/synthetic_junctions/"+anatomy+"/"+set_type
     geos = os.listdir(dir); geos.sort()
-    for i in range(num_geos):
+    for i in range(200, num_geos):
 
         geo_name = geos[i]
         print(geo_name)
