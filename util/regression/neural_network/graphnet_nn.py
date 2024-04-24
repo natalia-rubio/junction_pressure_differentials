@@ -38,7 +38,7 @@ def MLP(in_feats, latent_space, out_feats, n_h_layers):
     return model
 
 class GraphNet(tf.Module):
-    def __init__(self, anatomy, params, unsteady, unsteady_opt, loss_type):
+    def __init__(self, anatomy, set_type, params, unsteady, unsteady_opt, loss_type):
         super(GraphNet, self).__init__()
         self.loss_type = loss_type
         self.unsteady = unsteady
@@ -49,7 +49,7 @@ class GraphNet(tf.Module):
                                         params['hl_mlp'])
 
         self.params = params
-        self.scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_scaling_dict")
+        self.scaling_dict = load_dict(f"/home/nrubio/Desktop/junction_pressure_differentials/data/scaling_dictionaries/{anatomy}_{set_type}_scaling_dict")
         if unsteady and not unsteady_opt:
             if anatomy[0:5] == "Pulmo":
                 steady_model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_123_steady"

@@ -1,5 +1,6 @@
 import sys
 sys.path.append("/Users/natalia/Desktop/junction_pressure_differentials")
+sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.unified0D_plus.apply_unified0D_plus  import *
 from util.unified0D_plus.graph_to_junction_dict import *
 
@@ -103,7 +104,7 @@ def plot_mesh_convergence(anatomy):
         dP = master_tensor[4]
         print(flow_tensor)
 
-        
+
         plt.scatter(np.asarray(flow_tensor)[outlet_ind,:], np.asarray(dP)[outlet_ind,:]/1333, facecolors='none', edgecolors = color, marker = marker_list[i], s = 50, label = f"{ref_list[i]} mesh elements")
         re_max = max(re_max, get_re(inlet_flow = np.max(np.asarray(flow_tensor)[outlet_ind,:]), inlet_radius = char_val_dict["outlet_radius"][2*i+outlet_ind]))
 

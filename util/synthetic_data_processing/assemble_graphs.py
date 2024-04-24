@@ -1,5 +1,6 @@
 import sys
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
+sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 from util.tools.junction_proc import *
 

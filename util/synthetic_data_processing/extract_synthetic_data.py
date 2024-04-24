@@ -1,5 +1,6 @@
 import sys
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
+sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 
 def extract_steady_flow_data(anatomy, set_type, geo, require4):
@@ -95,10 +96,12 @@ def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = Fal
     for j, geo in enumerate(geos[0:]):
 
         try:
+            if os.path.exists(f"data/synthetic_junctions/{anatomy}/{set_type}/{geo}/junction_params_dict") == False:
+                print("junction_params_dict missing")
             junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{set_type}/{geo}/junction_params_dict")
 
             flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, set_type, geo, require4)
-            
+
             if len(flow_lists[0]) <= 2:
                 continue
 

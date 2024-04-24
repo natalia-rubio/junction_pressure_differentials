@@ -1,5 +1,6 @@
 import sys
 sys.path.append("/Users/Natalia/Desktop/junction_pressure_differentials")
+sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 from util.synthetic_data_processing.extract_synthetic_data import *
 from util.synthetic_data_processing.synthesize_synthetic_data import *

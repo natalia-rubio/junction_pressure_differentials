@@ -106,7 +106,7 @@ def evaluate_model(gnn_model,
     return train_results, validation_results
 
 
-def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train_params, network_params,
+def train_gnn_model(anatomy, set_type, gnn_model, train_dataset, validation_dataset, train_params, network_params,
     trial=1, percent_train = 60, model_name = None, index = 0,):
 
     unsteady = network_params["unsteady"]
@@ -170,6 +170,7 @@ def train_gnn_model(anatomy, gnn_model, train_dataset, validation_dataset, train
 
     cp_loss = tf.math.sqrt(mse(validation_dP_tensor_data_loader*0,
         validation_dP_tensor_data_loader/1333).numpy())
+    print(f"Constant Pressure Loss: {cp_loss}")
     quad_loss = tf.math.sqrt(gnn_model.get_quad_loss(validation_output_tensor_data_loader,
         validation_flow_tensor_data_loader,
         validation_flow_der_tensor_data_loader,

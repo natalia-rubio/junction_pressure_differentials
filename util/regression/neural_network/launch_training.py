@@ -39,10 +39,11 @@ def save_model(gnn_model, model_name):
     print(gnn_model.nn_model.get_config())
     return
 
-def train_and_val_gnn(anatomy, num_geos = 10, loss_type = "dP", unsteady = False, unsteady_opt = False, config = None):
+def train_and_val_gnn(anatomy, set_type, num_geos = 10, loss_type = "dP", unsteady = False, unsteady_opt = False, config = None):
+    #print(dgl.version)
     seed = 0
-    train_dataset_loc = f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset"
-    val_dataset_loc =f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset"
+    train_dataset_loc = f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/{set_type}/train_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset"
+    val_dataset_loc =f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/{set_type}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset"
     if not unsteady:
         train_dataset_loc+="_steady"
         val_dataset_loc+="_steady"
@@ -67,7 +68,7 @@ def train_and_val_gnn(anatomy, num_geos = 10, loss_type = "dP", unsteady = False
     train_params = {'learning_rate': 0.0931,# 0.018, #0.1,
                     'lr_decay': 0.00834, #0.031, #0.5,
                     'batch_size': 29, #24,# int(np.ceil(len(train_dataset)/10)),
-                    'nepochs': 300,
+                    'nepochs': 100,
                     'weight_decay': 10**(-5),
                     'optimizer_name' : "adam"}
 
@@ -79,8 +80,9 @@ def train_and_val_gnn(anatomy, num_geos = 10, loss_type = "dP", unsteady = False
         train_params["batch_size"] = config["batch_size"]
 
     model_name = get_model_name(network_params = network_params, train_params = train_params, seed = seed, num_geos = num_geos, unsteady = unsteady, unsteady_opt = unsteady_opt, loss_type = loss_type)
-    gnn_model = GraphNet(anatomy, network_params, unsteady, unsteady_opt, loss_type)
+    gnn_model = GraphNet(anatomy, set_type, network_params, unsteady, unsteady_opt, loss_type)
     gnn_model, val_mse, train_mse = train_gnn_model(anatomy,
+                                                    set_type,
                                                     gnn_model,
                                                       train_dataset,
                                                       val_dataset,
@@ -90,23 +92,24 @@ def train_and_val_gnn(anatomy, num_geos = 10, loss_type = "dP", unsteady = False
 
 
     save_model(gnn_model, model_name)
-    
+
     print(f"Train MSE: {train_mse}.  Validation MSE: {val_mse}")
 
     return train_mse, val_mse, model_name
 
 if __name__ == "__main__":
     anatomy = sys.argv[1]
-    num_geos = int(sys.argv[2])
-    unsteady_text = sys.argv[3]
-    unsteady_opt_text = sys.argv[4]
-    loss_type = sys.argv[5]
+    set_type = sys.argv[2]
+    num_geos = int(sys.argv[3])
+    unsteady_text = sys.argv[4]
+    unsteady_opt_text = sys.argv[5]
+    loss_type = sys.argv[6]
     unsteady = False
     if unsteady_text == "unsteady":
         unsteady = True
     unsteady_opt = False
     if unsteady_opt_text == "unsteady_opt":
         unsteady_opt = True
-    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = anatomy, num_geos = num_geos,  loss_type = loss_type, unsteady = unsteady, unsteady_opt = unsteady_opt, config = None)
+    train_mse, val_mse, model_name = train_and_val_gnn(anatomy = anatomy, set_type = set_type, num_geos = num_geos,  loss_type = loss_type, unsteady = unsteady, unsteady_opt = unsteady_opt, config = None)
     #train_mse, val_mse, model_name = train_and_val_gnn(anatomy = "mynard_rand", num_geos = 187,  seed = 0, unsteady = False, config = None)
     print(f"Train MSE: {train_mse}.  Val MSE {val_mse}.")

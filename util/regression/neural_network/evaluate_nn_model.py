@@ -22,7 +22,7 @@ num_geos = 129
 
 model_name = "1_hl_52_lsmlp_0_0931_lr_0_008_lrd_1e-05_wd_bs_29_nepochs_300_seed_0_geos_127"
 steady_model = tf.keras.models.load_model("results/models/neural_network/steady/"+model_name+"_steady", compile=True)
-dataset_loc =f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset"
+dataset_loc =f"/home/nrubio/Desktop/junction_pressure_differentials/data/dgl_datasets/{anatomy}/{set_type}/val_{anatomy}_num_geos_{num_geos}_seed_{seed}_dataset"
 validation_dataset = load_dict(dataset_loc)
 unsteady = False
 network_params = {
