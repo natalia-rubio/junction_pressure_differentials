@@ -19,8 +19,8 @@ if __name__ == "__main__":
                       "anatomy": anatomy,
                       "set_type": set_type}
     
-    training_params = {"num_epochs": 10, 
+    training_params = {"num_epochs": 200, 
                        "batch_size": 20,
-                       "step_size": 0.0001}
+                       "step_size": 0.002}
     
     launch_training(anatomy, set_type, network_params, training_params)

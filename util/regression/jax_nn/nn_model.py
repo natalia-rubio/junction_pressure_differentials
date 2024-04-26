@@ -3,6 +3,7 @@ from jax import grad, jit, vmap
 from jax import random
 from util.tools.basic import *
 from util.regression.jax_nn.nn_util import *
+import optax
 
 class NeuralNet():
    
@@ -24,15 +25,17 @@ def loss(input, flow, dP_true, scaling_dict, weights):
     coefs_pred = predict(input, weights)
     dP_pred = inv_scale_jax(scaling_dict, coefs_pred[:,0], "coef_a") * jnp.square(flow) + \
         inv_scale_jax(scaling_dict, coefs_pred[:,1], "coef_b") * flow
-    return jnp.sqrt(jnp.mean(jnp.square(dP_pred - dP_true)))
+    return jnp.sqrt(jnp.mean(jnp.square((dP_pred - dP_true)/1333)))
 
-@jit
-def update_model(input, flow, dP_true, scaling_dict, weights, step_size):
+
+def update_model(input, flow, dP_true, scaling_dict, weights, optimizer, opt_state):
     grads = grad(loss, argnums = -1)(input, 
                                     flow, 
                                     dP_true,
                                     scaling_dict,
                                     weights)
-    new_weights = [(w - step_size * dw, b - step_size * db)
-                    for (w, b), (dw, db) in zip(weights, grads)]
-    return new_weights
+    # new_weights = [(w - step_size * dw, b - step_size * db)
+    #                 for (w, b), (dw, db) in zip(weights, grads)]
+    updates, opt_state = optimizer.update(grads, opt_state)
+    new_weights = optax.apply_updates(weights, updates)
+    return new_weights, opt_state
