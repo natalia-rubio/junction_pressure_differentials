@@ -13,26 +13,26 @@ class NeuralNet():
         self.weights = init_weights(network_params)
         return
 
-    @jit
-    def predict(indices, weights):
-    # per-example predictions
-        input = self.data_dict["geo"][indices,:]
-        output = batched_forward_pass(input, weights)
-        return output
-    
+#input = self.data_dict["geo"][indices,:]
+@jit
+def predict(input, weights):
+    output = batched_forward_pass(input, weights)
+    return output
 
-    def loss(self, indices, weights):
-        flow = jnp.reshape(self.data_dict["flow"][indices,0:4], (-1,4))
-        dP_true = jnp.reshape(self.data_dict["dP"][indices,0:4], (-1,4))
-        
-        coefs_pred = self.predict(indices, weights)
-        dP_pred = inv_scale_jax(self.scaling_dict, coefs_pred[:,0], "coef_a"), jnp.square(flow) + \
-            inv_scale_jax(self.scaling_dict, coefs_pred[:,1], "coef_b") * flow
-        pdb.set_trace()
-        return jnp.sqrt(jnp.mean(jnp.square(dP_pred - dP_true)))
+@jit
+def loss(input, flow, dP_true, scaling_dict, weights):
+    coefs_pred = predict(input, weights)
+    dP_pred = inv_scale_jax(scaling_dict, coefs_pred[:,0], "coef_a") * jnp.square(flow) + \
+        inv_scale_jax(scaling_dict, coefs_pred[:,1], "coef_b") * flow
+    return jnp.sqrt(jnp.mean(jnp.square(dP_pred - dP_true)))
 
-    # @jit
-    def update(self, indices, weights, step_size):
-        grads = grad(self.loss, argnums = 1)(indices, weights)
-        self.weights = [(w - step_size * dw, b - step_size * db)
-                        for (w, b), (dw, db) in zip(weights, grads)]
+@jit
+def update_model(input, flow, dP_true, scaling_dict, weights, step_size):
+    grads = grad(loss, argnums = -1)(input, 
+                                    flow, 
+                                    dP_true,
+                                    scaling_dict,
+                                    weights)
+    new_weights = [(w - step_size * dw, b - step_size * db)
+                    for (w, b), (dw, db) in zip(weights, grads)]
+    return new_weights
