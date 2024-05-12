@@ -8,8 +8,8 @@ import random
 import copy
 from scipy import interpolate
 import pickle
-import dgl
-import tensorflow as tf
+#import dgl
+#import tensorflow as tf
 from util.tools.vtk_functions import *
 from util.tools.get_bc_integrals import *
 #from util.junction_extraction_util.get_avg_sol import *
@@ -232,24 +232,6 @@ def classify_branches(flow, junc_pts, pt_arr):
           outlets.append(branch_pt)
     return inlets, outlets
 
-def get_inlet_outlet_pairs(num_inlets, num_outlets):
-
-    inlet_list = []; outlet_list = []
-    for inlet in range(num_inlets):
-        for outlet in range(num_outlets):
-            inlet_list.append(inlet); outlet_list.append(outlet)
-    inlet_outlet_pairs = (tf.convert_to_tensor(inlet_list, dtype=tf.int32),
-                            tf.convert_to_tensor(outlet_list, dtype=tf.int32))
-    return inlet_outlet_pairs
-
-def get_outlet_pairs(num_outlets):
-    outlet_list1 = []; outlet_list2 = []
-    for outlet1 in range(num_outlets):
-        for outlet2 in range(num_outlets):
-            outlet_list1.append(outlet1); outlet_list2.append(outlet2)
-    outlet_pairs = (tf.convert_to_tensor(outlet_list1, dtype=tf.int32),
-                            tf.convert_to_tensor(outlet_list2, dtype=tf.int32))
-    return outlet_pairs
 
 def get_angle_diff(angle1, angle2):
     try:

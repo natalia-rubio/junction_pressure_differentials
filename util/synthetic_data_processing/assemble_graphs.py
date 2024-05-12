@@ -2,6 +2,8 @@ import sys
 sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 from util.tools.junction_proc import *
+import tensorflow as tf
+import dgl
 
 def assemble_graphs(anatomy, set_type, unsteady = False):
 
@@ -98,3 +100,23 @@ def assemble_graphs(anatomy, set_type, unsteady = False):
     else:
         dgl.save_graphs(f"data/graph_lists/{anatomy}/{set_type}/graph_list_steady", graph_list)
     return graph
+
+
+def get_inlet_outlet_pairs(num_inlets, num_outlets):
+
+    inlet_list = []; outlet_list = []
+    for inlet in range(num_inlets):
+        for outlet in range(num_outlets):
+            inlet_list.append(inlet); outlet_list.append(outlet)
+    inlet_outlet_pairs = (tf.convert_to_tensor(inlet_list, dtype=tf.int32),
+                            tf.convert_to_tensor(outlet_list, dtype=tf.int32))
+    return inlet_outlet_pairs
+
+def get_outlet_pairs(num_outlets):
+    outlet_list1 = []; outlet_list2 = []
+    for outlet1 in range(num_outlets):
+        for outlet2 in range(num_outlets):
+            outlet_list1.append(outlet1); outlet_list2.append(outlet2)
+    outlet_pairs = (tf.convert_to_tensor(outlet_list1, dtype=tf.int32),
+                            tf.convert_to_tensor(outlet_list2, dtype=tf.int32))
+    return outlet_pairs

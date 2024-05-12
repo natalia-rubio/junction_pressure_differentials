@@ -3,8 +3,8 @@ sys.path.append("/Users/Natalia/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 from util.synthetic_data_processing.extract_synthetic_data import *
 from util.synthetic_data_processing.synthesize_synthetic_data import *
-from util.synthetic_data_processing.assemble_graphs import *
-from util.synthetic_data_processing.train_val_split import *
+# from util.synthetic_data_processing.assemble_graphs import *
+# from util.synthetic_data_processing.train_val_split import *
 
 anatomy = sys.argv[1];
 set_type= sys.argv[2];
@@ -22,8 +22,8 @@ print("Fitted dP(Q) coefficients.")
 get_geo_scalings(anatomy, set_type = set_type, unsteady = unsteady)
 print("Generated scaling dictionary.")
 
-assemble_graphs(anatomy, set_type = set_type, unsteady = unsteady)
-print("Assembled graphs.")
+# assemble_graphs(anatomy, set_type = set_type, unsteady = unsteady)
+# print("Assembled graphs.")
 
-generate_train_val_datasets(anatomy, set_type = set_type, unsteady = unsteady)
-print("Train and validation datasets ready.")
+# generate_train_val_datasets(anatomy, set_type = set_type, unsteady = unsteady)
+# print("Train and validation datasets ready.")

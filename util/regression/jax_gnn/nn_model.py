@@ -4,6 +4,8 @@ from jax import random
 from util.tools.basic import *
 from util.regression.jax_nn.nn_util import *
 import optax
+import haiku as hk
+import jraph
 
 class NeuralNet():
    
@@ -32,7 +34,41 @@ class NeuralNet():
         self.weights = optax.apply_updates(self.weights, updates)
         return
 
-#input = self.data_dict["geo"][indices,:]
+
+def hookes_hamiltonian_from_graph_fn(
+    graph: jraph.GraphsTuple) -> jraph.GraphsTuple:
+
+#   def update_edge_fn(edges, sent_attributes, received_attributes, global_edge_attributes):
+#     input = jnp.concatenate([edges, sent_attributes, received_attributessenders, globals_])
+#     layer_sizes = network_params["num_edge_features"] + network_params["num_hidden_layers"] * [network_params["latent_size"]]
+#     return hk.nets.MLP(layer_sizes)(input)
+
+    def update_node_fn(nodes, sent_attributes, received_attributes, global_attributes):
+        input = jnp.concatenate([nodes, sent_attributes, received_attributes, global_attributes])
+        layer_sizes = network_params["num_edge_features"] + network_params["num_hidden_layers"] * [network_params["latent_size"]]
+        return hk.nets.MLP(layer_sizes)(input)
+    
+    def aggregate_edges_for_nodes_fn(e, edge_gr_idx, sum_n_node):
+        return jraph.segment_sum
+    def aggregate_nodes_for_globals_fn(n, node_gr_idx, n_graph):
+        return jraph.segment_sum
+    def aggregate_edges_for_globals_fn(n, node_gr_idx, n_graph):
+        return jraph.segment_sum
+    
+    def update_global_fn(nodes, edges, globals_):
+        del globals_
+        # At this point we will receive node and edge features aggregated (summed)
+        # for all nodes and edges in each graph.
+        hamiltonian_per_graph = nodes["kinetic_energy"] + edges["hookes_potential"]
+        return frozendict({"hamiltonian": hamiltonian_per_graph})
+
+    gn = jraph.GraphNetwork(
+        update_edge_fn=update_edge_fn,
+        update_node_fn=update_node_fn,
+        update_global_fn=update_global_fn)
+
+    return gn(graph)
+
 @jit
 def predict(input, weights):
     output = batched_forward_pass(input, weights)

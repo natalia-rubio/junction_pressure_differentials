@@ -1,5 +1,6 @@
 import sys
-sys.path.append("/home/nrubio/Desktop/junction_pressure_differentials")
+import os
+sys.path.append("/Users/natalia/Desktop/junction_pressure_differentials")
 from util.tools.basic import *
 
 def extract_steady_flow_data(anatomy, set_type, geo, require4):
@@ -15,13 +16,15 @@ def extract_steady_flow_data(anatomy, set_type, geo, require4):
         #pdb.set_trace()
         try:
             flow_result_dir = results_dir + f"flow_{i}_red_sol_full"
-            if not os.path.exists(results_dir):
-                if require4:
-                    assert os.path.exists(results_dir), f"Flow {i} missing for geometry {geo}"
-                else:
+            
+            if not os.path.exists(flow_result_dir):
+                flow_result_dir = results_dir + f"flow_{i}_red_sol"
+                #print(flow_result_dir)
+                if not os.path.exists(flow_result_dir):
+                    #print(f"Flow {i} missing for geometry {geo} at {results_dir}")
                     continue
             soln_dict = load_dict(flow_result_dir)
-
+            #print("Loaded solution dict")
             for outlet_ind in range(2):
 
                 flow_lists[outlet_ind] += [soln_dict["flow"][outlet_ind]]
@@ -29,10 +32,9 @@ def extract_steady_flow_data(anatomy, set_type, geo, require4):
                 dP_junc_lists[outlet_ind] += [soln_dict["dp_junc"][outlet_ind]]
         except:
             if require4:
-                raise ValueError
-            else:
                 raise ValueError(f"Could not extract steady data from {geo}, flow {i}.\n\
                                  Solution dict: {soln_dict}")
+            continue
     return flow_lists, dP_lists, dP_junc_lists
 
 def extract_unsteady_flow_data(anatomy, set_type, geo):
@@ -97,7 +99,11 @@ def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = Fal
         try:
             junction_params = load_dict(f"data/synthetic_junctions/{anatomy}/{set_type}/{geo}/junction_params_dict")
 
-            flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, set_type, geo, require4)
+            try:
+                flow_lists, dP_lists, dP_junc_lists = extract_steady_flow_data(anatomy, set_type, geo, require4)
+                #print(f"Extracted steady flow data for {geo}")
+            except:
+                print(f"Problem extracting steady flow data for {geo}.  Skipping.")
             
             if len(flow_lists[0]) <= 2:
                 continue
@@ -117,9 +123,13 @@ def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = Fal
 
 
             # Extract geometric data from one steady solution
-            results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo}/flow_0_red_sol_full"
-            assert os.path.exists(results_dir), f"Results directory {results_dir} does not exist."
+            results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo}/flow_1_red_sol_full"
+            if not os.path.exists(results_dir):
+                results_dir = f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo}/flow_1_red_sol"
+                if not os.path.exists(results_dir):
+                    print(f"Solution dict not found for {geo} at {results_dir}")
             soln_dict = load_dict(results_dir)
+            print(f"Loaded solution dict for {geo}")
 
             assert soln_dict["area"] is not None, f"Area not found in reduced solution for {geo}."
             assert soln_dict["length"] is not None, f"Length not found in reduced solution for {geo}."
@@ -132,8 +142,10 @@ def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = Fal
 
             char_val_dict["inlet_length"] += [soln_dict["length"][2], soln_dict["length"][2]]
             char_val_dict["outlet_length"] += [soln_dict["length"][0], soln_dict["length"][1]]
-
-            char_val_dict["angle"] += [junction_params["angle1"], junction_params["angle2"]]
+            try:
+                char_val_dict["angle"] += [junction_params["angle1"], junction_params["angle2"]]
+            except:
+                char_val_dict["angle"] += [junction_params["outlet1_angle"], junction_params["outlet2_angle"]]
             char_val_dict["name"] += [geo+"_1", geo+"_2"]
 
         except:
