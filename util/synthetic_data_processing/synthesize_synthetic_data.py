@@ -115,7 +115,10 @@ def get_geo_scalings(anatomy, set_type, unsteady = False):
 
     char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     scaling_dict = {}
-    to_normalize = ["outlet_radius","inlet_radius","outlet_area","inlet_area", "angle", "coef_a", "coef_b", "inlet_length", "outlet_length"]
+    to_normalize = ["outlet_radius","inlet_radius","outlet_radius_norm", "inlet_radius_norm", 
+                    "outlet_area","inlet_area", "angle", 
+                    "coef_a", "coef_b", 
+                    "inlet_length", "outlet_length", "inlet_length_norm", "outlet_length_norm"]
     if unsteady:
         to_normalize.append("coef_L")
         to_normalize.append("coef_a_UO")

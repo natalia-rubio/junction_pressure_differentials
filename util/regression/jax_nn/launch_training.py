@@ -10,7 +10,7 @@ def launch_training(anatomy, set_type, network_params, optimizer_params, trainin
     return
 
 if __name__ == "__main__":
-    anatomy = "AP"
+    anatomy = sys.argv[1]
     set_type = "random"
     network_params = {"num_input_features": 8,
                       "num_layers": 3,
@@ -20,11 +20,11 @@ if __name__ == "__main__":
                       "set_type": set_type}
     
     training_params = {"num_epochs": 1000, 
-                       "batch_size": 20}
+                       "batch_size": 10}
     
     optimizer_params = {"step_size": 0.002,
-                        "init" : 0.01,
+                        "init" : 0.02,
                         "transition_steps": 700,
-                        "decay_rate" : 0.1}
+                        "decay_rate" : 0.3}
     
     launch_training(anatomy, set_type, network_params, optimizer_params, training_params)

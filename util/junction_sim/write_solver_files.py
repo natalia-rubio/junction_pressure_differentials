@@ -107,9 +107,8 @@ pressure_vtp /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo
 pressure_vtp /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo}/mesh-complete/mesh-surfaces/cap_{res_caps[1]}.vtp 0\n\
 noslip_vtp /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo}/mesh-complete/walls_combined.vtp\n\
 write_geombc /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo}/{flow_name}/geombc.dat.1\n\
-read_all_variables_vtu /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo}/{flow_name}/initial_soln.vtu\n\
 write_restart /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo}/{flow_name}/restart.0.1"
-
+#read_all_variables_vtu /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo}/{flow_name}/initial_soln.vtu\n\
     f = open(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo}/{flow_name}/{flow_name}_job.svpre", "w")
     f.write(svpre)
     f.close()

@@ -15,6 +15,7 @@ import jax.numpy as jnp
 import networkx as nx
 
 def get_3d_geo(anatomy, set_type, geometry):
+    char_val_dict = load_dict(f"data/characteristic_value_dictionaries/{anatomy}_{set_type}_synthetic_data_dict")
     offset = 10
     try:
         fpath_1dsol = f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geometry}/1dsol_flow_solution_0.vtp"
@@ -52,27 +53,34 @@ def get_3d_geo(anatomy, set_type, geometry):
     inlet_area = downsample(area[inlet_pts][np.argsort(pt_id[inlet_pts])], num_samples = downsample_pts)
     outlet1_area = downsample(area[outlet1_pts][np.argsort(pt_id[outlet1_pts])], num_samples = downsample_pts)
     outlet2_area = downsample(area[outlet2_pts][np.argsort(pt_id[outlet2_pts])], num_samples = downsample_pts)
+    areas = np.concatenate((inlet_area, outlet1_area, outlet1_area), axis=0)
 
     # Label node ids for the graph
     
     inlet_node_ids, main_outlet_node_ids, aux_outlet_node_ids, type_array = get_graph_node_ids(inlet_locs, outlet1_locs, outlet2_locs)
     downstream_neighbors, upstream_neighbors = get_neighbors(inlet_node_ids, main_outlet_node_ids, aux_outlet_node_ids)
-    senders = np.concatenate((downstream_neighbors, upstream_neighbors))
-    receivers = np.concatenate((upstream_neighbors, downstream_neighbors))
+    senders = downstream_neighbors[1:]-1 # np.concatenate((downstream_neighbors, upstream_neighbors))
+    receivers = upstream_neighbors[1:]-1 # np.concatenate((upstream_neighbors, downstream_neighbors))
 
     # num_nodes x num_features
     node_features = np.concatenate((
-        np.concatenate((inlet_area, outlet1_area, outlet2_area), axis=0).reshape(-1,1),
-        type_array), axis=1)
+        areas[upstream_neighbors].reshape(-1,1),
+        np.linalg.norm(locs[upstream_neighbors] - locs[downstream_neighbors], axis = 1).reshape(-1,1),
+        np.linalg.norm(tans[upstream_neighbors] - tans[downstream_neighbors], axis = 1).reshape(-1,1),
+        type_array[upstream_neighbors,:]), axis=1)
     
     edge_features = np.concatenate((np.linalg.norm(locs[senders] - locs[receivers], axis = 1).reshape(-1,1),
                                     np.linalg.norm(tans[senders] - tans[receivers], axis = 1).reshape(-1,1)), axis=1)
+    
+    
+    globals = np.asarray([char_val_dict["coef_a"][0], char_val_dict["coef_b"][0], 0] + \
+                         char_val_dict["flow_list"][0] + char_val_dict["dP_list"][0])
 
     graph = jraph.GraphsTuple(nodes = jnp.array(node_features),
                               edges = jnp.array(edge_features), 
                               receivers = jnp.array(receivers),
                               senders = jnp.array(senders),
-                              globals = None,
+                              globals = globals,
                               n_node = node_features.shape[0],
                               n_edge = edge_features.shape[0])
     return graph
@@ -146,4 +154,6 @@ if __name__ == "__main__":
     set_type = "random"
     geometry = "AP_000"
     graph = get_3d_geo(anatomy, set_type, geometry)
+    save_dict(graph, f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geometry}/graph")
+
     #draw_jraph_graph_structure(graph)

@@ -24,8 +24,8 @@ class NeuralNet():
     
     def update(self, indices):
         grads = grad(loss, argnums = -1)(self.data_dict["geo"][indices,:],
-            jnp.reshape(self.data_dict["flow"][indices,0:4], (-1,4)),
-            jnp.reshape(self.data_dict["dP"][indices,0:4], (-1,4)),
+            self.data_dict["flow"][indices,:],
+            self.data_dict["dP"][indices,:],
             self.scaling_dict,
             self.weights)
         updates, self.opt_state = self.optimizer.update(grads, self.opt_state)

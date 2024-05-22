@@ -46,8 +46,8 @@ while num_launched < num_geos:
             if os.path.exists(f"/scratch/users/nrubio/synthetic_junctions_reduced_results/{anatomy}/{set_type}/{geo_name}/flow_{i}_red_sol_full"):
                 print(f"Simulation already complete for flow {flow_index}")
                 continue
-            print(f"Initializing solution.")
-            project_0d_to_3D(anatomy, set_type, geo_name, flow_index)
+            #print(f"Initializing solution.")
+            #project_0d_to_3D(anatomy, set_type, geo_name, flow_index)
 
             set_up_sim_directories(anatomy, set_type, geo_name, flow_name, num_cores)
             flow_params = {"flow_amp": inlet_flow*inlet_flow_fac,
@@ -55,7 +55,8 @@ while num_launched < num_geos:
                             "res_1": 100,
                             "res_2": 100}
 
-            
+            time_step_size = (np.sqrt(inlet_area/np.pi))/flow_params["vel_in"]
+            print(f"Time step size: {time_step_size}")
             write_svpre_steady(anatomy, set_type, geo_name, flow_index, flow_params, copy.deepcopy(cap_numbers), inlet_cap_number, num_time_steps, time_step_size)
             write_inp_steady(anatomy, set_type, geo_name, flow_index, flow_params, copy.deepcopy(cap_numbers), inlet_cap_number, num_time_steps, time_step_size)
             write_flow_steady(anatomy, set_type, geo_name, flow_index, flow_params["flow_amp"], inlet_cap_number, num_time_steps, time_step_size)

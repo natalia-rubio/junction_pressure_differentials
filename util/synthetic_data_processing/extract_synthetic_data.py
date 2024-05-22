@@ -78,8 +78,10 @@ def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = Fal
     print(f"Anatomy: {anatomy}")
 
     char_val_dict = {"outlet_radius": [],
+                     "outlet_radius_norm": [],
                     "inlet_area": [],
                     "inlet_radius": [],
+                    "inlet_radius_norm": [],
                     "outlet_area": [],
                     "angle": [],
                     "flow_list": [],
@@ -90,6 +92,8 @@ def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = Fal
                     "dP_junc_list": [],
                     "inlet_length": [],
                     "outlet_length": [],
+                    "inlet_length_norm": [],
+                    "outlet_length_norm": [],
                     "name": []}
 
     geos = os.listdir(f"data/synthetic_junctions_reduced_results/{anatomy}/{set_type}"); geos.sort(); print(f"Geometries: {geos}")
@@ -137,11 +141,20 @@ def collect_synthetic_results(anatomy, set_type, require4 = True, unsteady = Fal
             char_val_dict["inlet_radius"] += [np.sqrt(soln_dict["area"][2]/np.pi), np.sqrt(soln_dict["area"][2]/np.pi)]
             char_val_dict["outlet_radius"] += [np.sqrt(soln_dict["area"][0]/np.pi), np.sqrt(soln_dict["area"][1]/np.pi)]
 
+            char_val_dict["inlet_radius_norm"] += [1, 1]
+            char_val_dict["outlet_radius_norm"] += [np.sqrt(soln_dict["area"][0]/np.pi)/np.sqrt(soln_dict["area"][2]/np.pi),
+                                               np.sqrt(soln_dict["area"][1]/np.pi)/np.sqrt(soln_dict["area"][2]/np.pi)]
+
             char_val_dict["inlet_area"] += [soln_dict["area"][2],soln_dict["area"][2]]
             char_val_dict["outlet_area"] += [soln_dict["area"][0], soln_dict["area"][1]]
 
             char_val_dict["inlet_length"] += [soln_dict["length"][2], soln_dict["length"][2]]
             char_val_dict["outlet_length"] += [soln_dict["length"][0], soln_dict["length"][1]]
+
+            char_val_dict["inlet_length_norm"] += [soln_dict["length"][2]/np.sqrt(soln_dict["area"][2]/np.pi), 
+                                                   soln_dict["length"][2]/np.sqrt(soln_dict["area"][2]/np.pi)]
+            char_val_dict["outlet_length_norm"] += [soln_dict["length"][0]/np.sqrt(soln_dict["area"][2]/np.pi), 
+                                                    soln_dict["length"][1]//np.sqrt(soln_dict["area"][2]/np.pi)]
             try:
                 char_val_dict["angle"] += [junction_params["angle1"], junction_params["angle2"]]
             except:

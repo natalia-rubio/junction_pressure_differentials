@@ -22,14 +22,16 @@ def train_nn(model, anatomy, set_type, training_params):
         epoch_time = time.time() - start_time
 
         # Print epoch results
+        # if epoch ==500:
+        #     #pdb.set_trace()
         train_loss = loss(input = model.data_dict["geo"][train_inds,:],
-                        flow =  jnp.reshape(model.data_dict["flow"][train_inds,0:4], (-1,4)),
-                        dP_true = jnp.reshape(model.data_dict["dP"][train_inds,0:4], (-1,4)),
+                        flow =  model.data_dict["flow"][train_inds,:],
+                        dP_true = model.data_dict["dP"][train_inds,:],
                         scaling_dict = model.scaling_dict,
                         weights = model.weights)
         val_loss = loss(input = model.data_dict["geo"][val_inds,:],
-                        flow =  jnp.reshape(model.data_dict["flow"][val_inds,0:4], (-1,4)),
-                        dP_true = jnp.reshape(model.data_dict["dP"][val_inds,0:4], (-1,4)),
+                        flow =  model.data_dict["flow"][val_inds,:],
+                        dP_true = model.data_dict["dP"][val_inds,:],
                         scaling_dict = model.scaling_dict,
                         weights = model.weights)
         print("Epoch {} in {:0.2f} sec  |  ".format(epoch, epoch_time) + \

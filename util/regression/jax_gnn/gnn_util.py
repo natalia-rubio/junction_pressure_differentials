@@ -7,12 +7,11 @@ import pdb
 # Neural Network Architecture
 def get_sizes(network_params):
     # Get the sizes of the network layers
-    num_input_features = network_params["num_input_features"]
-    num_layers = network_params["num_layers"]
-    layer_width = network_params["layer_width"]
-    num_output_features = network_params["num_output_features"]
-    sizes = [num_input_features] + [layer_width]*num_layers + [num_output_features]
-    return sizes
+
+    encoder_sizes = [network_params["num_input_features"]] + [network_params["layer_width"]]*network_params["num_encoder_layers"]
+    passing_sizes = [2*network_params["layer_width"]] + [network_params["layer_width"]]*network_params["num_passing_layers"]
+    decoder_sizes = [network_params["layer_width"]]*network_params["num_decoder_layers"] + [network_params["num_output_features"]]
+    return encoder_sizes, passing_sizes, decoder_sizes
 
 def random_layer_params(m, n, key, scale=1e-2):
     # Randomly initialize the weights of a layer
@@ -22,9 +21,12 @@ def random_layer_params(m, n, key, scale=1e-2):
 def init_weights(network_params):
     # Initialize the weights of the network
     key = random.key(0)
-    sizes = get_sizes(network_params)
-    keys = random.split(key, len(sizes))
-    return [random_layer_params(m, n, k) for m, n, k in zip(sizes[:-1], sizes[1:], keys)]
+    encoder_sizes, passing_sizes, decoder_sizes = get_sizes(network_params)
+
+    encoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(encoder_sizes[:-1], encoder_sizes[1:], random.split(key, len(encoder_sizes)))]
+    passing_weights = [random_layer_params(m, n, k) for m, n, k in zip(passing_sizes[:-1], passing_sizes[1:], random.split(key, len(passing_sizes)))]
+    decoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(decoder_sizes[:-1], decoder_sizes[1:], random.split(key, len(decoder_sizes)))]
+    return encoder_weights, passing_weights, decoder_weights
 
 
 # Data Handling

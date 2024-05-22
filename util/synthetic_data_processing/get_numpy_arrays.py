@@ -24,20 +24,23 @@ def get_numpy_arrays(anatomy, set_type, unsteady = False):
 
     for i in range(int(len(char_val_dict["inlet_radius"])/2)):
 
-        geo_list.append([scale(scaling_dict, np.asarray(char_val_dict["inlet_area"][2*i]), "inlet_area"),\
-                            scale(scaling_dict, np.asarray(char_val_dict["inlet_length"][2*i]), "inlet_length"),\
+        geo_list.append([
+                # scale(scaling_dict, char_val_dict["coef_a"][2*i], "coef_a"),
+                # scale(scaling_dict, char_val_dict["coef_b"][2*i], "coef_b"),
+                scale(scaling_dict, np.asarray(char_val_dict["inlet_radius"][2*i]), "inlet_radius"),\
+                scale(scaling_dict, np.asarray(char_val_dict["inlet_length"][2*i]), "inlet_length"),\
 
-                            scale(scaling_dict, np.asarray(char_val_dict["outlet_area"][2*i]), "outlet_area"),\
-                            scale(scaling_dict, np.asarray(char_val_dict["outlet_length"][2*i]), "outlet_length"),\
-                            scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i]), "angle"),\
+                scale(scaling_dict, np.asarray(char_val_dict["outlet_radius"][2*i]), "outlet_radius"),\
+                scale(scaling_dict, np.asarray(char_val_dict["outlet_length"][2*i]), "outlet_length"),\
+                scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i]), "angle"),\
 
-                            scale(scaling_dict, np.asarray(char_val_dict["outlet_area"][2*i + 1]), "outlet_area"),\
-                            scale(scaling_dict, np.asarray(char_val_dict["outlet_length"][2*i + 1]), "outlet_length"),\
-                            scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i + 1]), "angle")])
+                scale(scaling_dict, np.asarray(char_val_dict["outlet_radius"][2*i + 1]), "outlet_radius"),\
+                scale(scaling_dict, np.asarray(char_val_dict["outlet_length"][2*i + 1]), "outlet_length"),\
+                scale(scaling_dict, np.asarray(char_val_dict["angle"][2*i + 1]), "angle")])
 
-        flow_list.append(char_val_dict["flow_list"][2*i] + char_val_dict["flow_list"][2*i + 1])
+        flow_list.append(char_val_dict["flow_list"][2*i]) # + char_val_dict["flow_list"][2*i + 1])
        
-        dP_list.append(char_val_dict["dP_list"][2*i] + char_val_dict["dP_list"][2*i + 1])
+        dP_list.append(char_val_dict["dP_list"][2*i]) # + char_val_dict["dP_list"][2*i + 1])
 
         geo_name_list.append(char_val_dict["name"][2*i])
 
@@ -62,7 +65,8 @@ def get_numpy_arrays(anatomy, set_type, unsteady = False):
 
         else:
             coef_list.append([scale(scaling_dict, char_val_dict["coef_a"][2*i], "coef_a"),
-                scale(scaling_dict, char_val_dict["coef_b"][2*i], "coef_b")])
+                scale(scaling_dict, char_val_dict["coef_b"][2*i], "coef_b"),
+                scale(scaling_dict, char_val_dict["coef_L"][2*i], "coef_L")])
     data_dict = {"geo": jnp.asarray(geo_list), 
                  "flow": jnp.asarray(flow_list), 
                  "dP": jnp.asarray(dP_list), 
@@ -73,7 +77,7 @@ def get_numpy_arrays(anatomy, set_type, unsteady = False):
     if not os.path.exists(f"data/numpy_arrays/{anatomy}/{set_type}"):
         os.mkdir(f"data/numpy_arrays/{anatomy}/{set_type}")
     save_dict(data_dict, f"data/numpy_arrays/{anatomy}/{set_type}/{anatomy}_{set_type}_data_dict")
-    pdb.set_trace()
+
     return
 
 if __name__ == "__main__":
