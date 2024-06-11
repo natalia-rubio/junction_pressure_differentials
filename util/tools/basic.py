@@ -22,6 +22,11 @@ def load_dict(filename_):
         dict = pickle.load(f)
     return dict
 
+def minmax_scale(scaling_dict, field, field_name):
+    min = scaling_dict[field_name][0]; max = scaling_dict[field_name][1]
+    scaled_field = (field-min) * (1/(max-min))
+    return scaled_field
+
 def scale(scaling_dict, field, field_name):
     if scaling_dict[field_name][1] == 0:
         scaled_field = field

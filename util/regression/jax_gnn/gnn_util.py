@@ -13,7 +13,7 @@ def get_sizes(network_params):
     decoder_sizes = [network_params["layer_width"]]*network_params["num_decoder_layers"] + [network_params["num_output_features"]]
     return encoder_sizes, passing_sizes, decoder_sizes
 
-def random_layer_params(m, n, key, scale=1e-2):
+def random_layer_params(m, n, key, scale=1e-1):
     # Randomly initialize the weights of a layer
     w_key, b_key = random.split(key)
     return scale * random.normal(w_key, (n, m)), scale * random.normal(b_key, (n,))
@@ -26,6 +26,7 @@ def init_weights(network_params):
     encoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(encoder_sizes[:-1], encoder_sizes[1:], random.split(key, len(encoder_sizes)))]
     passing_weights = [random_layer_params(m, n, k) for m, n, k in zip(passing_sizes[:-1], passing_sizes[1:], random.split(key, len(passing_sizes)))]
     decoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(decoder_sizes[:-1], decoder_sizes[1:], random.split(key, len(decoder_sizes)))]
+
     return encoder_weights, passing_weights, decoder_weights
 
 
@@ -33,8 +34,8 @@ def init_weights(network_params):
 def get_train_val_split(num_pts, percent_train=0.8):
     # Split the data into training and validation sets
     indices = np.random.permutation(num_pts)
-    train_indices = indices[:int(percent_train*num_pts)]
-    val_indices = indices[int(percent_train*num_pts):]
+    train_indices = (indices[:int(percent_train*num_pts)]).astype(int)
+    val_indices = (indices[int(percent_train*num_pts):]).astype(int)
     return train_indices, val_indices
 
 def get_batch_indices(indices, batch_size):
@@ -55,7 +56,7 @@ def inv_scale_jax(scaling_dict, field, field_name):
 def relu(x):
   # Rectified Linear Unit activation function
   return jnp.maximum(0, x)
-
+batched_relu = vmap(relu, in_axes=(0,))
     
 def forward_pass(input,weights):
     # Forward pass through the network

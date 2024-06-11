@@ -57,10 +57,14 @@ def get_cap_info(anatomy, set_type, geo_name, correct_cap_numbers = 2):
     return inlet_cap_number, cap_numbers
 
 def load_params_dict(anatomy, set_type, geo_name):
-    params_dict = load_dict(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/junction_params_dict")
-    inlet_velocity = 180 #params_dict["inlet_velocity"]
+    try:
+        params_dict = load_dict(f"/scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}/junction_params_dict")
+    except:
+        print(f"Couldn't load parameter dictionary: /scratch/users/nrubio/synthetic_junctions/{anatomy}/{set_type}/{geo_name}")
+        ValueError("Couldn't load parameter dictionary.")
+    #inlet_velocity = #180 #params_dict["inlet_velocity"]
     inlet_area = np.pi * params_dict["inlet_radius"]**2
-    inlet_flow = inlet_velocity * inlet_area
+    inlet_flow = params_dict["inlet_flow"] #velocity * inlet_area
     return inlet_flow, inlet_area
 
 def save_dict(di_, filename_):

@@ -1,33 +1,32 @@
 import sys
 sys.path.append("/Users/Natalia/Desktop/junction_pressure_differentials")
-from util.regression.jax_gnn.gnn_model import NeuralNet
-from util.regression.jax_gnn.train_gnn import train_nn
+from util.regression.jax_gnn.gnn_model import GraphNeuralNet
+from util.regression.jax_gnn.train_gnn import train_gnn
 
 def launch_training(anatomy, set_type, network_params, optimizer_params, training_params):
     
-    model = NeuralNet(network_params, optimizer_params)
-    train_nn(model, anatomy, set_type, training_params)
+    model = GraphNeuralNet(network_params, optimizer_params)
+    train_gnn(model, anatomy, set_type, training_params)
     return
 
 if __name__ == "__main__":
-    anatomy = "AP"
+    anatomy = "Aorta"
     set_type = "random"
     network_params = {"num_input_features": 6,
-                    "num_encoder_layers": 2,
-                    "num_passing_layers": 2,
-                    "num_decoder_layers": 2,
-                    "layer_width": 10,
+                    "num_encoder_layers": 1,
+                    "num_passing_layers": 1,
+                    "num_decoder_layers": 1,
+                    "layer_width": 5,
                     "num_output_features": 3,
                     "num_message_passing_steps": 1,
                     "anatomy": anatomy,
                     "set_type": set_type}
     
-    training_params = {"num_epochs": 1000, 
-                       "batch_size": 20}
+    training_params = {"num_epochs": 2000, 
+                       "batch_size": 30}
     
-    optimizer_params = {"step_size": 0.002,
-                        "init" : 0.01,
-                        "transition_steps": 700,
-                        "decay_rate" : 0.1}
+    optimizer_params = {"init" : 0.0005,
+                        "transition_steps": 2000,
+                        "decay_rate" : 0.05}
     
     launch_training(anatomy, set_type, network_params, optimizer_params, training_params)
