@@ -28,13 +28,15 @@ def train_gnn(model, anatomy, set_type, training_params):
                         scaling_dict = model.scaling_dict,
                         encoder_weights = model.encoder_weights,
                         update_weights = model.passing_weights, 
-                        decoder_weights = model.decoder_weights, 
+                        main_path_decoder_weights = model.main_path_decoder_weights, 
+                        aux_path_decoder_weights= model.aux_path_decoder_weights,
                         num_message_passing_steps = model.num_message_passing_steps)
         val_loss = loss(graph = jraph.batch([model.graph_list[i] for i in list(val_inds)]),
                         scaling_dict = model.scaling_dict,
                         encoder_weights = model.encoder_weights,
                         update_weights = model.passing_weights, 
-                        decoder_weights = model.decoder_weights, 
+                        main_path_decoder_weights = model.main_path_decoder_weights, 
+                        aux_path_decoder_weights= model.aux_path_decoder_weights,
                         num_message_passing_steps = model.num_message_passing_steps)
         print("Epoch {} in {:0.2f} sec  |  ".format(epoch, epoch_time) + \
               "Training set accuracy {:e}  |  ".format(train_loss) + \

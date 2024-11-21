@@ -16,17 +16,17 @@ if __name__ == "__main__":
                     "num_encoder_layers": 1,
                     "num_passing_layers": 1,
                     "num_decoder_layers": 1,
-                    "layer_width": 5,
+                    "layer_width": 2,
                     "num_output_features": 3,
                     "num_message_passing_steps": 1,
                     "anatomy": anatomy,
                     "set_type": set_type}
     
-    training_params = {"num_epochs": 2000, 
-                       "batch_size": 30}
+    training_params = {"num_epochs": 1000, 
+                       "batch_size": 20}
     
-    optimizer_params = {"init" : 0.0005,
-                        "transition_steps": 2000,
+    optimizer_params = {"init" : 0.002,
+                        "transition_steps": 10000000,
                         "decay_rate" : 0.05}
     
     launch_training(anatomy, set_type, network_params, optimizer_params, training_params)

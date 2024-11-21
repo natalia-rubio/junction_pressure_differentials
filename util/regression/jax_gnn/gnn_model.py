@@ -39,32 +39,37 @@ class GraphNeuralNet():
         # self.graph = load_dict(f"data/synthetic_junctions_reduced_results/AP/random/AP_000/graph")
         self.graph_list = load_dict(f"data/graphs/{self.anatomy}/{self.set_type}/graph_list")
         self.scaling_dict = load_dict(f"data/scaling_dictionaries/{self.anatomy}_{self.set_type}_scaling_dict")
-        self.encoder_weights, self.passing_weights, self.decoder_weights = init_weights(network_params)
+        self.encoder_weights, self.passing_weights, self.main_path_decoder_weights, self.aux_path_decoder_weights = init_weights(network_params)
+        
         self.num_message_passing_steps = network_params["num_message_passing_steps"]
 
         self.scheduler = optax.exponential_decay(init_value = optimizer_params["init"], 
                                                  transition_steps = optimizer_params["transition_steps"], 
                                                  decay_rate = optimizer_params["decay_rate"])
         self.optimizer = optax.adam(learning_rate = self.scheduler)
-        self.opt_state = self.optimizer.init((self.encoder_weights, self.passing_weights, self.decoder_weights))
+        self.opt_state = self.optimizer.init((self.encoder_weights, self.passing_weights, \
+                                              self.main_path_decoder_weights, self.aux_path_decoder_weights))
         return
     
     def update(self, indices):
         graph = jraph.batch([self.graph_list[i] for i in list(indices)])
-        grads = grad(loss, argnums = [-4, -3, -2])(graph, #(self.data_dict["geo"][indices,:],
+
+        grads = grad(loss, argnums = [-5, -4, -3, -2])(graph, #(self.data_dict["geo"][indices,:],
             self.scaling_dict,
-            self.encoder_weights, self.passing_weights, self.decoder_weights, self.num_message_passing_steps)
+            self.encoder_weights, self.passing_weights, self.main_path_decoder_weights, self.aux_path_decoder_weights,
+            self.num_message_passing_steps)
         updates, self.opt_state = self.optimizer.update(grads, self.opt_state)
-        self.encoder_weights, self.passing_weights, self.decoder_weights = optax.apply_updates(
-            (self.encoder_weights, self.passing_weights, self.decoder_weights), updates)
+        new_weights= optax.apply_updates((self.encoder_weights,self.passing_weights,self.main_path_decoder_weights,self.aux_path_decoder_weights), updates)
+        self.encoder_weights = new_weights[0]; self.passing_weights = new_weights[1]
+        self.main_path_decoder_weights = new_weights[2]; self.aux_path_decoder_weights = new_weights[3]
         return
 
 
 #@jit
-def loss(graph, scaling_dict, encoder_weights, update_weights, decoder_weights, num_message_passing_steps):
+def loss(graph, scaling_dict, encoder_weights, update_weights, main_path_decoder_weights, aux_path_decoder_weights, num_message_passing_steps):
 
     flow = graph.globals[:,3:6]; dP_true = graph.globals[:,6:9]
-    coefs_pred = predict(graph, encoder_weights, update_weights, decoder_weights, num_message_passing_steps)
+    coefs_pred = predict(graph, encoder_weights, update_weights, main_path_decoder_weights, aux_path_decoder_weights, num_message_passing_steps)
     # print(coefs_pred)
     # pdb.set_trace()
 
@@ -72,7 +77,7 @@ def loss(graph, scaling_dict, encoder_weights, update_weights, decoder_weights, 
     return jnp.sqrt(jnp.mean(jnp.square((dP_pred - dP_true)/1333)))
 
 #@jit
-def predict(graph, encoder_weights, passing_weights, decoder_weights, num_message_passing_steps):
+def predict(graph, encoder_weights, passing_weights, main_path_decoder_weights, aux_path_decoder_weights, num_message_passing_steps):
     """
     Args:
       graph: a `GraphsTuple` containing the graph.
@@ -83,6 +88,8 @@ def predict(graph, encoder_weights, passing_weights, decoder_weights, num_messag
     # pylint: disable=g-long-lambda
     nodes, edges, receivers, senders, globals, n_node, n_edge = graph
     node_types = nodes[:,3:6]
+    main_path = (node_types[:,-1] == 0)#.reshape(-1,1)
+    aux_path = (node_types[:,-1] == 1)#.reshape(-1,1)
     # Equivalent to jnp.sum(n_node), but jittable
     sum_n_node = tree.tree_leaves(nodes)[0].shape[0]
     sum_n_edge = senders.shape[0]
@@ -97,10 +104,12 @@ def predict(graph, encoder_weights, passing_weights, decoder_weights, num_messag
         received_attributes = tree.tree_map(lambda n: n[receivers], nodes)
         
         updated_nodes = batched_relu(batched_forward_pass(jnp.concatenate([nodes[receivers], received_attributes],axis = 1), passing_weights))
-        nodes.at[receivers].set(updated_nodes)
+        nodes = nodes.at[receivers].set(updated_nodes)
 
-    nodes = batched_forward_pass(nodes, decoder_weights)
+    decoded_nodes = jnp.zeros((nodes.shape[0], 3))
+    decoded_nodes = decoded_nodes.at[main_path,:].set(batched_forward_pass(nodes[main_path, :], main_path_decoder_weights))
+    decoded_nodes = decoded_nodes.at[aux_path, :].set(batched_forward_pass(nodes[aux_path, :], aux_path_decoder_weights))
     #pdb.set_trace()
-    nodes = jnp.multiply(nodes, (node_types[:,-1] == 0).astype(jnp.float32).reshape(-1,1))
+    #nodes = jnp.multiply(nodes, (node_types[:,-1] == 0).astype(jnp.float32).reshape(-1,1))
     #print(nodes)
-    return jnp.sum(nodes.reshape(-1, 29, 3), axis=1)
+    return jnp.sum(decoded_nodes.reshape(-1, 29, 3), axis=1)

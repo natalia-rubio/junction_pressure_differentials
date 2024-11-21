@@ -13,7 +13,7 @@ def get_sizes(network_params):
     decoder_sizes = [network_params["layer_width"]]*network_params["num_decoder_layers"] + [network_params["num_output_features"]]
     return encoder_sizes, passing_sizes, decoder_sizes
 
-def random_layer_params(m, n, key, scale=1e-1):
+def random_layer_params(m, n, key, scale=1e-2):
     # Randomly initialize the weights of a layer
     w_key, b_key = random.split(key)
     return scale * random.normal(w_key, (n, m)), scale * random.normal(b_key, (n,))
@@ -25,9 +25,9 @@ def init_weights(network_params):
 
     encoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(encoder_sizes[:-1], encoder_sizes[1:], random.split(key, len(encoder_sizes)))]
     passing_weights = [random_layer_params(m, n, k) for m, n, k in zip(passing_sizes[:-1], passing_sizes[1:], random.split(key, len(passing_sizes)))]
-    decoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(decoder_sizes[:-1], decoder_sizes[1:], random.split(key, len(decoder_sizes)))]
-
-    return encoder_weights, passing_weights, decoder_weights
+    main_path_decoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(decoder_sizes[:-1], decoder_sizes[1:], random.split(key, len(decoder_sizes)))]
+    aux_path_decoder_weights = [random_layer_params(m, n, k) for m, n, k in zip(decoder_sizes[:-1], decoder_sizes[1:], random.split(key, len(decoder_sizes)))]
+    return encoder_weights, passing_weights, main_path_decoder_weights, aux_path_decoder_weights
 
 
 # Data Handling

@@ -144,8 +144,8 @@ def get_3d_geos(anatomy, set_type):
 
       # num_nodes x num_features
       node_features = np.concatenate((
-          areas[upstream_neighbors].reshape(-1,1),
-          np.linalg.norm(locs[upstream_neighbors] - locs[downstream_neighbors], axis = 1).reshape(-1,1),
+          areas[upstream_neighbors].reshape(-1,1) * 0 + char_val_dict["coef_a"][2*geo_num],
+          (np.linalg.norm(locs[upstream_neighbors] - locs[downstream_neighbors], axis = 1).reshape(-1,1))*0 + char_val_dict["coef_b"][2*geo_num],
           np.linalg.norm(tans[upstream_neighbors] - tans[downstream_neighbors], axis = 1).reshape(-1,1),
           type_array[upstream_neighbors,:]), axis=1)
 
